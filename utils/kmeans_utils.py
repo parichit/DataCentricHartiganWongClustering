@@ -8,23 +8,25 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sortedcontainers import SortedDict
-from sklearn.cluster import kmeans_plusplus
+import random
+from scipy.spatial import distance
 
 
 def init_centroids(data, num_clusters, seed):
 
     # Randomly select points from the data as centroids
     # np.random.seed(seed)
-
-    # indices = np.random.choice(data.shape[0], num_clusters, replace=False, )
+    # indices = random.sample(range(num_clusters), num_clusters)
+    # indices = np.random.choice(data.shape[0], num_clusters, replace=False)
     return np.array(data[0:num_clusters, :])
-    # return np.array(data[indices, :])
+    return np.array(data[indices, :])
 
 
-    # return np.array(data[0:num_clusters, :])
-    # return centers
-    # return np.array(data[indices, :])
+def init_centroids_hw(data):
 
+    temp = np.zeros(shape=(len(data), 2), dtype='int')
+    temp = np.argpartition(distance.cdist(data, data), 2, 1)[:, 0:2]
+    return temp
 
 def calculate_distances(data, centroids):
 
@@ -38,47 +40,19 @@ def calculate_distances(data, centroids):
     return np.argmin(dist_mat, axis=1), np.round(np.min(dist_mat, axis=1), 5)
 
 
-def calculate_distances_less_modalities(data, centroids):
-
-    num_clusters = len(centroids)
-    stat = False
-
-    # Find pairwise distances
-    n, d = data.shape
-    dist_mat = np.zeros((n, num_clusters), dtype=float)
-
-    for i in range(n):
-        dist_mat[i, :] = np.sqrt(np.sum(np.square(data[i] - centroids), 1))
-
-    assigned_clusters = np.argmin(dist_mat, axis=1)
-    u_clusters = np.sort(np.unique(assigned_clusters))
-
-    remove_indices = [i for i in range(num_clusters) if i not in u_clusters]
-
-    if len(remove_indices) > 0:
-        stat = True
-
-    return assigned_clusters, np.round(np.min(dist_mat, axis=1), 5), stat
-
-
-def calculate_distances_specific(data, centroids, neighbors):
+def calculate_distances_test(data, centroids):
 
     # Find pairwise distances
     n, d = data.shape
     dist_mat = np.zeros((n, len(centroids)), dtype=float)
+    temp = np.zeros(shape=(n, 2), dtype='int')
 
-    for i in range(len(centroids)):
-        dist_mat[:, i] = np.sum(np.square(data - centroids[i]), 1)
-    dist_mat = np.sqrt(dist_mat)
+    for i in range(n):
+        dist_mat[i, :] = np.sqrt(np.sum(np.square(data[i] - centroids), 1))
 
-    # Find the closest centroid
-    assigned_clusters = np.argmin(dist_mat, axis=1)
-    distances = np.min(dist_mat, axis=1)
-
-    temp = np.array(neighbors)
-    assigned_clusters = temp[assigned_clusters]
-
-    return assigned_clusters, np.round(distances, 5)
+    # print(dist_mat)
+    temp = np.argpartition(dist_mat, 2, 1)[:, 0:2]
+    return temp, np.round(np.min(dist_mat, axis=1), 5)
 
 
 def calculate_centroids(data, assigned_clusters):
@@ -87,6 +61,28 @@ def calculate_centroids(data, assigned_clusters):
     new_centroids = np.array(temp)
 
     return np.round(new_centroids, 5)
+
+
+def calculate_centroids_hw(data, assigned_clusters, new_centroids, clus):
+
+    # temp = [np.mean(data[np.where(assigned_clusters[:, 0] == i),], axis=1)[0] for i in np.sort(np.unique(clus))]
+    for i in clus:
+        temp = np.mean(data[np.where(assigned_clusters[:, 0] == i),], axis=1)[0]    
+        new_centroids[i, :] = np.array(temp)
+
+    return np.round(new_centroids, 5)
+
+
+
+def check_centroid_status(curr_cluster, new_centroids, centroids):
+
+    # print("Old: ", centroids)
+    # print("New: ", new_centroids)
+
+    # if centroids[curr_cluster].all() != new_centroids[curr_cluster].all():
+    #         return True
+    
+    return (centroids[curr_cluster,:] != new_centroids[curr_cluster,:]).all()
 
 
 def create_sorted_structure(assigned_clusters, distances, num_clusters):
@@ -147,13 +143,6 @@ def move_all_data_around(bst_list, he_bst_indices, he_points, assigned_clusters,
             actual_point = he_points[index]
             if he_new_min_dist[index] < he_bst_indices[actual_point]:
 
-                # print("Debug-1.1", "Point:", actual_point, "old: ", assigned_clusters[actual_point],
-                #       "new: ", he_new_assigned_centers[index],
-                #       "old dist: ", he_bst_indices[actual_point],
-                #       "new dist: ", he_new_min_dist[index])
-                #
-                # for i in range(len(bst_list)):
-                #     print(i, bst_list[i])
 
                 old_center = assigned_clusters[actual_point]
                 # print(bst_list[old_center])
@@ -283,6 +272,35 @@ def do_PCA(dataset, centroids1, centroids2, labels, title, file_name):
     plt.savefig(file_name + ".png")
     plt.show()
     #plt.close()
+
+
+def sse_after_move(data, new_centroids, sse1, lowest_sse, index, curr_cluster, ot_cluster, size2):
+    
+    sse2 = (size2 * np.sum(np.square(data[index, :] - new_centroids[ot_cluster, :])))/(size2+1)
+
+    status = False
+
+    # if lowest_sse == -999 and sse2 < sse1:
+    #     lowest_sse = sse2
+    #     status = True
+
+    if sse2 < sse1:
+        # lowest_sse = sse2
+        status = True
+        print(index, curr_cluster, ot_cluster, sse1, sse2)
+
+    # elif sse2 < lowest_sse:
+    #     lowest_sse = sse2
+    #     status = True
+    if ot_cluster == 1:
+        print(sse2)
+    
+    return status
+
+
+def find_sse(data, centroids, indices, cluster_index):
+    sse = np.sum(np.square(data[indices, :] - centroids[cluster_index, :]))/len(indices)
+    return sse
 
 
 def get_quality(data, final_assign, final_centroids, num_clusters):
