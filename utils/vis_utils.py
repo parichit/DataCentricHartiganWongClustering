@@ -262,4 +262,11 @@ def get_membership(assigned_clusters, distances, num_clusters, assign_dict):
     return assign_dict, radius
 
 
+def get_size(assigned_clusters, num_clusters):
+    sizes = []
+    for i in range(num_clusters):
+        sizes += [len(np.where(assigned_clusters == i)[0])]
+    return sizes
+
+
 

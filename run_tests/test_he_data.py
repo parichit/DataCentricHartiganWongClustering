@@ -41,7 +41,7 @@ file_path = os.path.join(data_path, "real_data")
 threshold = 0.001
 num_iterations = 100
 clusters = [i for i in range(1, 21)]
-clusters = [15]
+clusters = [5, 10, 15, 25, 30, 35]
 
 seed = 1245 
 

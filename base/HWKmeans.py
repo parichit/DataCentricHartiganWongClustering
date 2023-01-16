@@ -96,8 +96,7 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
     new_centroids = calculate_centroids(data, assigned_clusters)
     assign_dict = {}
     
-    cluster_size = get_size(assigned_clusters, num_clusters)
-
+    
     while loop_counter<num_iterations:
 
         he_data_indices = []
