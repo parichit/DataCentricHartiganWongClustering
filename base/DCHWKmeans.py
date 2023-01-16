@@ -12,77 +12,56 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
 
     # Centroid status checker
     centroid_status = False
-    new_assigned_clusters = np.zeros(shape=(len(data)))
+    dist_mat = np.zeros((num_clusters, num_clusters))
 
     # Calculate the cluster assignments for data points
-    assigned_clusters, _ = calculate_distances(data, centroids)
-    new_assigned_clusters[:] = assigned_clusters[:]
+    assigned_clusters, distances = calculate_distances(data, centroids)
+    cluster_size = get_size(assigned_clusters, num_clusters)
 
     # Re-calculate the centroids
     new_centroids = calculate_centroids(data, assigned_clusters)
+    assign_dict = {}
 
     while loop_counter<num_iterations:
 
-        he_data_indices = []
         loop_counter += 1
+        # print("\n", loop_counter)
+        # print(new_centroids)
+
+        # Find the neighbors of current cluster and iterate over the neighbors
+        assign_dict, radius = get_membership(assigned_clusters, distances, num_clusters, assign_dict)
         
         for curr_cluster in range(num_clusters):
 
             if check_centroid_status(curr_cluster, new_centroids, centroids):
 
                 centroid_status = True
-
-                indices = np.where(assigned_clusters == curr_cluster)[0]
-                curr_cluster_size = len(indices)
-
-
-                # Compare the SSE with other clusters
-                sse = distance.cdist(data[indices, :], new_centroids, 'sqeuclidean')
-                curr_sse = (curr_cluster_size * sse[:, curr_cluster])/curr_cluster_size-1
+  
+                sse, he_indices = find_all_points_test(data, curr_cluster, new_centroids[curr_cluster], radius, assign_dict[curr_cluster])
+                # if loop_counter == 1:
+                #     print(curr_cluster, " --> He data: ", he_indices)
+                    # print(curr_cluster,  neighbors[curr_cluster])
                 
-                for ot_cluster in range(num_clusters):
-                        
-                        if curr_cluster != ot_cluster:
-                            
-                            size_ot_cluster = len(np.where(assigned_clusters == ot_cluster)[0])
-                            ot_sse = (size_ot_cluster * sse[:, ot_cluster])/size_ot_cluster+1
+                if len(he_indices) > 0:
+                    
+                    assigned_clusters, distances = calculate_sse_specific(data, new_centroids, cluster_size, he_indices, assigned_clusters, curr_cluster, sse, distances)
 
-                            temp_indices = np.where(ot_sse < curr_sse)[0]
-
-                            if curr_cluster == 2:
-                                print(curr_sse)
-                                print(ot_sse)
-                            
-                            # Update the cluster membership for the data point
-                            if len(temp_indices) > 0:
-                                # print(temp_indices)
-                                temp_indices2 = indices[temp_indices].tolist()
-                                new_assigned_clusters[temp_indices2] = ot_cluster
-                                he_data_indices += temp_indices2
+                    # if len(i) > 0:
+                    #     print(i, updated_dist)
+                    #     distances[i] = updated_dist
 
             else:
                 centroid_status = False
-        
 
-        if len(he_data_indices) > 0:
-            # print("hey: ", he_data_indices)
-            _, distances = calculate_distances(data, new_centroids)
-            for i in he_data_indices:
-                print("Point: ", i, " Old center: ", assigned_clusters[i], "\t", "new center: ", new_assigned_clusters[i])
-            # vis_data_with_he(data, new_centroids, assigned_clusters, distances,
-            #              loop_counter, he_data_indices, he_data_indices)
 
         # Re-calculate the centroids
         centroids[:] = new_centroids[:]
-        assigned_clusters[:] = new_assigned_clusters[:]
         new_centroids = calculate_centroids(data, assigned_clusters)
-
-        # print("Size of centroids: ", len(centroids), "\t", len(new_centroids))
+        cluster_size = get_size(assigned_clusters, num_clusters)
 
         if centroid_status == False:
             print("Convergence at iteration: ", loop_counter)
             break
-
 
     # sse = get_quality(data, new_assigned_clusters, new_centroids, num_clusters)
     return new_centroids, loop_counter

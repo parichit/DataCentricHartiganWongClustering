@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-import time
+from scipy.spatial import distance
 
 
 def vis_data_with_he(data, centroids, assigned_clusters, distances,
@@ -169,6 +169,7 @@ def find_all_he_indices_neighbor(dataset, new_centroids, radius, assign_dict, di
     return centroids_neighbor, he_indices_dict
 
 
+
 def get_midpoints_np(new_centroids, radius, dist_mat):
 
     centroid_neighbor = {}
@@ -182,37 +183,26 @@ def get_midpoints_np(new_centroids, radius, dist_mat):
     for i in range(len(new_centroids)):
 
         cen1_rad = radius[i]
-        neighbors = np.where(dist_mat[i] <= cen1_rad)[0]
-        centroid_neighbor[i] = neighbors
+        neighbors = np.where(dist_mat[i] < cen1_rad)[0]
+        centroid_neighbor[i] = np.array(neighbors)
 
     return centroid_neighbor
 
 
-def find_all_points(dataset, centroids_neighbor, new_centroids, assign_dict):
+def find_all_points_test(data, curr_cluster, new_centroid, radius, assigned_points):
 
     he_data = []
 
-    for curr_cluster in range(len(new_centroids)):
+    sse = np.sum(np.square(data[assigned_points,:] - new_centroid), 1)
+    new_sse = np.sqrt(sse)
+    my_radius = radius[curr_cluster]/2
+    indices = np.where(sse > my_radius)[0]
 
-        center1 = new_centroids[curr_cluster]
-        temp_list_1 = np.array(assign_dict[curr_cluster])
+    if len(indices)>0:
+        he_data = assigned_points[indices]
+        sse = sse[indices]
 
-        # Determine the sign of other centroid
-        for ot_cen in centroids_neighbor[curr_cluster]:
-
-            if curr_cluster != ot_cen:
-
-                center2 = new_centroids[ot_cen]
-                mid_point = np.divide(np.add(center1, center2), 2)
-
-                test_data = dataset[temp_list_1, ]
-                point_sign = find_sign_by_product(mid_point, center2, test_data)
-                same_sign = np.where(point_sign > 0)[0]
-
-                if len(same_sign)>0:
-                    he_data += list(temp_list_1[same_sign])
-
-    return np.unique(he_data)
+    return sse, he_data
 
 
 def find_all_points_neighbor(dataset, centroids_neighbor, new_centroids, assign_dict):
@@ -225,6 +215,9 @@ def find_all_points_neighbor(dataset, centroids_neighbor, new_centroids, assign_
         temp_list_1 = np.array(assign_dict[curr_cluster])
         he_data_indices = []
 
+        # print("POints in cluser: ", curr_cluster)
+        # print(temp_list_1)
+
         # Determine the sign of other centroid
         for ot_cen in centroids_neighbor[curr_cluster]:
 
@@ -233,21 +226,8 @@ def find_all_points_neighbor(dataset, centroids_neighbor, new_centroids, assign_
                 # print("Centers: ", curr_cluster, "-", ot_cen)
                 center2 = new_centroids[ot_cen]
                 mid_point = np.divide(np.add(center1, center2), 2)
-
-                # print("Centerss: ", center1, "\n", center2)
-                # print("Mid points: ", mid_point)
-
+                
                 test_data = dataset[temp_list_1]
-
-                # Find the same sign first
-                # temp_sign = find_sign_by_product(mid_point, center1, test_data)
-                # opposite_sign = np.where(temp_sign <= 0)[0]
-
-                # print("Center-1: ", curr_cluster, " other center: ", ot_cen,
-                #       " No. opposite points: ", len(opposite_sign))
-
-                # if len(opposite_sign) == 0:
-                #     continue
 
                 point_sign = find_sign_by_product(mid_point, center2, test_data)
                 same_sign = np.where(point_sign > 0)[0]
@@ -258,11 +238,7 @@ def find_all_points_neighbor(dataset, centroids_neighbor, new_centroids, assign_
                 if len(same_sign) > 0:
                     he_data_indices += temp_list_1[same_sign].tolist()
 
-            # for i in he_data_indices:
-            #     if i == 67:
-            #         print("Point: ",i, "Data-midpoint vector: ", mid_point, "\ncenter-midpoint vector: ", center2-mid_point)
-
-        he_data[curr_cluster] = np.unique(he_data_indices).tolist()
+        he_data[curr_cluster] = np.unique(he_data_indices)
 
     return he_data
 
@@ -270,7 +246,6 @@ def find_all_points_neighbor(dataset, centroids_neighbor, new_centroids, assign_
 def find_sign_by_product(mid_point, center2, points):
 
     temp_vec = np.subtract(center2, mid_point)
-    # print("Centroid vector: ", temp_vec)
     points_vec = np.subtract(points, mid_point)
     return points_vec.dot(temp_vec)
 
@@ -280,7 +255,7 @@ def get_membership(assigned_clusters, distances, num_clusters, assign_dict):
     radius = {}
 
     for i in range(num_clusters):
-        indices = np.where(assigned_clusters == i)[0].tolist()
+        indices = np.where(assigned_clusters == i)[0]
         assign_dict[i] = indices
         radius[i] = np.max(distances[indices])
 
