@@ -3,6 +3,7 @@ sys.path.append("../")
 
 from utils.dataIO import *
 from base.HWKmeans import *
+from base.DCHWKmeans import *
 from pathlib import Path
 import time
 
@@ -17,7 +18,7 @@ Algo2: DCKMeans
 file_list = ['50_2_10.csv']
 
 # file_list = ['ijcnn.csv']
-# file_list = ['magic.csv']
+file_list = ['magic.csv']
 # file_list = ['user_knowledge_train.csv']
 # file_list = ['hapt_train.csv']
 # file_list = ['covertype.csv']
@@ -25,13 +26,13 @@ file_list = ['50_2_10.csv']
 # file_list = ['crop.csv']
 
 data_path = "/Users/schmuck/Documents/OneDrive - Indiana University/Box Sync/PhD/DATASETS"
-data_path = "/Users/schmuck/Library/CloudStorage/OneDrive-IndianaUniversity/Box Sync/PhD/DataCentricHartiganWongClustering"
+# data_path = "/Users/schmuck/Library/CloudStorage/OneDrive-IndianaUniversity/Box Sync/PhD/DataCentricHartiganWongClustering"
 
 # Make changes for adjusting the current directory here
 file_path = os.path.join(data_path, "clustering_data")
 # file_path = os.path.join(Path(__file__).parents[1], "benchmark", "scal_data")
 file_path = os.path.join(data_path, "real_data")
-file_path = os.path.join(data_path, "sample_data")
+# file_path = os.path.join(data_path, "sample_data")
 # file_path = os.path.join(data_path, "clustering_data")
 # file_path = os.path.join(data_path, "data")
 
@@ -39,9 +40,10 @@ file_path = os.path.join(data_path, "sample_data")
 # Set parameters
 threshold = 0.001
 num_iterations = 100
-num_clusters = 8
+clusters = [i for i in range(1, 21)]
+clusters = [15]
 
-seed = 1245
+seed = 1245 
 
 seeds = np.random.randint(1, 1200, 1000)
 seeds = [1]
@@ -56,20 +58,28 @@ for data_file in file_list:
     print("Data Shape :", data.shape)
 
     for seed in seeds:
-        # kmdc_start_time = time.time()
-        # kmdc_centroids, kmdc_iter, dckm_calc = DCKMeans(data, num_clusters, threshold, num_iterations, centers, seed)
-        # kmdc_TraningTime = round(time.time() - kmdc_start_time, 2)
 
-        km_start_time = time.time()
-        km_centroids, km_iter = HWKmeans_test(data, num_clusters, num_iterations, seed)
-        km_TraningTime = round(time.time() - km_start_time, 5)
+        for num_clusters in clusters:
 
-        # km_start_time = time.time()
-        # km_centroids, km_iter = HWKmeans_1(data, num_clusters, num_iterations, seed)
-        # km_TraningTime = round(time.time() - km_start_time, 5)
+            print("\nNum clusters: ", num_clusters, "\n")
 
-        print(km_centroids)
-        # print("Time", km_TraningTime)
+            hw_start_time = time.time()
+            hw_centroids, hw_iter = HWKmeans(data, num_clusters, num_iterations, seed)
+            hw_TraningTime = round(time.time() - hw_start_time, 5)
+
+            dchw_start_time = time.time()
+            dchw_centroids, dchw_iter = DCHWKmeans(data, num_clusters, num_iterations, seed)
+            dchw_TraningTime = round(time.time() - dchw_start_time, 5)
+
+            dev = np.sum(np.square(hw_centroids- dchw_centroids))
+            
+            if dev != 0:
+                print("Deviation not zero for: ", num_clusters )
+                break
+            else:
+                print(dev)
+
+        # print("Time", dchw_TraningTime)
         # print(km_cacl, dckm_calc)
         # print("Dev: ", round(np.sqrt(np.mean(np.square(km_centroids - kmlb_centroids))), 3))
 
