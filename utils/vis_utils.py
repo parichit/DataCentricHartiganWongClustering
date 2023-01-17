@@ -86,12 +86,19 @@ def vis_data_with_he(data, centroids, assigned_clusters, distances,
     plt.show()
 
 
-def vis_data_with_he_test(data, centroids, assigned_clusters, distances,
+def vis_data_with_he_test(data, centroids, assigned_clusters, distances, t,
                          loop_counter, data_changed, he_data_indices):
 
     cols = ["col"+str(i) for i in range(data.shape[1])]
 
-    dataset = pd.DataFrame(data)
+    temp234 = np.where(assigned_clusters == t[0])[0].tolist()
+    temp234 += np.where(assigned_clusters == t[1])[0].tolist()
+    centroids = centroids[t, :]
+
+    he_data_indices = np.where(temp234 == he_data_indices)[0].tolist()
+    data_changed = np.where(temp234 == data_changed)[0].tolist()
+
+    dataset = pd.DataFrame(data[temp234, ])
     dataset.columns = [cols]
     temp = pd.DataFrame(centroids)
     temp.columns = [cols]
@@ -105,10 +112,12 @@ def vis_data_with_he_test(data, centroids, assigned_clusters, distances,
     principalComponents = pca.fit_transform(dataset)
     pc_esc = pd.DataFrame(data=principalComponents, columns=['PC1', 'PC2'])
 
-    temp1 = [str(x) for x in assigned_clusters]
+    temp1 = [str(assigned_clusters[x]) for x in temp234]
     temp1 += ["Centroid" for i in range(centroids.shape[0])]
 
-    temp2 = [10 for i in range(len(assigned_clusters))]
+    print(dataset.shape, len(temp234))
+
+    temp2 = [10 for i in range(len(temp234))]
     temp2 += [20 for i in range(centroids.shape[0])]
 
     pc_esc['labels'] = temp1
@@ -118,9 +127,10 @@ def vis_data_with_he_test(data, centroids, assigned_clusters, distances,
     mid_points = []
     centroid_neighbor = {}
 
-    for i in range(len(centroids)):
 
-        s = np.where(assigned_clusters == i)[0]
+    for i in range(len(t)):
+
+        s = np.where(assigned_clusters == t[i])[0]
         cen1_rad = np.max(distances[s])
 
         for j in range(len(centroids)):
@@ -157,17 +167,11 @@ def vis_data_with_he_test(data, centroids, assigned_clusters, distances,
     plt.show()
 
 
-def find_all_he_indices(dataset, new_centroids, distances, assign_dict, dist_mat):
-    centroids_neighbor = get_midpoints_np(new_centroids, assign_dict, distances, dist_mat)
-    he_indices = find_all_points(dataset, centroids_neighbor, new_centroids, assign_dict)
-    return he_indices
-
 
 def find_all_he_indices_neighbor(dataset, new_centroids, radius, assign_dict, dist_mat):
     centroids_neighbor = get_midpoints_np(new_centroids, radius, dist_mat)
     he_indices_dict = find_all_points_neighbor(dataset, centroids_neighbor, new_centroids, assign_dict)
     return centroids_neighbor, he_indices_dict
-
 
 
 def get_midpoints_np(new_centroids, radius, dist_mat):
@@ -192,9 +196,8 @@ def get_midpoints_np(new_centroids, radius, dist_mat):
 def find_all_points_test(data, curr_cluster, new_centroid, radius, assigned_points):
 
     he_data = []
-
+    # print("test-1: ", new_centroid.shape)
     sse = np.sum(np.square(data[assigned_points,:] - new_centroid), 1)
-    new_sse = np.sqrt(sse)
     my_radius = radius[curr_cluster]/2
     indices = np.where(sse > my_radius)[0]
 

@@ -39,7 +39,9 @@ curr_cluster, my_sse, distances):
     curr_cluster_size = cluster_size[curr_cluster]
 
     sse = distance.cdist(data[he_data_indices, :], new_centroids, 'sqeuclidean')
-    my_sse = (curr_cluster_size * my_sse)/(curr_cluster_size-1)
+
+    if curr_cluster_size > 1:
+        my_sse = (curr_cluster_size * my_sse)/(curr_cluster_size-1)
     
     for ot_cluster in range(len(new_centroids)):
                         

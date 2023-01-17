@@ -4,12 +4,13 @@ sys.path.append("../")
 from utils.dataIO import *
 from base.HWKmeans import *
 from base.DCHWKmeans import *
+from base.test_both_algos import *
 from pathlib import Path
 import time
 
 '''
-Algo1: KMeans
-Algo2: DCKMeans
+Algo1: HWKMeans
+Algo2: HWDCKMeans
 '''
 
 
@@ -23,7 +24,7 @@ file_list = ['magic.csv']
 # file_list = ['hapt_train.csv']
 # file_list = ['covertype.csv']
 # file_list = ['spambase.csv']
-# file_list = ['crop.csv']
+file_list = ['crop.csv']
 
 data_path = "/Users/schmuck/Documents/OneDrive - Indiana University/Box Sync/PhD/DATASETS"
 # data_path = "/Users/schmuck/Library/CloudStorage/OneDrive-IndianaUniversity/Box Sync/PhD/DataCentricHartiganWongClustering"
@@ -38,16 +39,13 @@ file_path = os.path.join(data_path, "real_data")
 
 
 # Set parameters
-threshold = 0.001
 num_iterations = 100
-clusters = [i for i in range(1, 21)]
-clusters = [5, 10, 15, 25, 30, 35]
+clusters = [i for i in range(11, 21, 1)]
+clusters = [15]
 
 seed = 1245 
-
 seeds = np.random.randint(1, 1200, 1000)
-seeds = [1]
-counter = 1
+seeds= [12]
 
 
 for data_file in file_list:
@@ -63,25 +61,31 @@ for data_file in file_list:
 
             print("\nNum clusters: ", num_clusters, "\n")
 
+            # hw_start_time = time.time()
+            # hw_centroids, hw_iter, hw_labels = HWKmeans(data, num_clusters, num_iterations, seed)
+            # hw_TraningTime = round(time.time() - hw_start_time, 5)
+
+            # dchw_start_time = time.time()
+            # dchw_centroids, dchw_iter, dchw_labels = DCHWKmeans(data, num_clusters, num_iterations, seed)
+            # dchw_TraningTime = round(time.time() - dchw_start_time, 5)
+
+            # dev = np.sum(np.square(hw_centroids - dchw_centroids))
+            
+            # if dev != 0:
+            #     print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            #     print("Deviation is ", dev, " for ",  num_clusters, " clusters")
+            #     print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
+                
+            #     temp1 = check_ARI(labels, hw_labels)
+            #     temp2 = check_ARI(labels, dchw_labels)
+            #     print("ARI: ", temp1, "\t", temp2)
+
+            # print("Time", hw_TraningTime, dchw_TraningTime)
+
             hw_start_time = time.time()
-            hw_centroids, hw_iter = HWKmeans(data, num_clusters, num_iterations, seed)
+            hw_centroids, hw_iter, hw_labels = HWKmeans_test123(data, num_clusters, num_iterations, seed)
             hw_TraningTime = round(time.time() - hw_start_time, 5)
 
-            dchw_start_time = time.time()
-            dchw_centroids, dchw_iter = DCHWKmeans(data, num_clusters, num_iterations, seed)
-            dchw_TraningTime = round(time.time() - dchw_start_time, 5)
-
-            dev = np.sum(np.square(hw_centroids- dchw_centroids))
             
-            if dev != 0:
-                print("Deviation not zero for: ", num_clusters )
-                break
-            else:
-                print(dev)
 
-        # print("Time", dchw_TraningTime)
-        # print(km_cacl, dckm_calc)
-        # print("Dev: ", round(np.sqrt(np.mean(np.square(km_centroids - kmlb_centroids))), 3))
-
-    counter += 1
 

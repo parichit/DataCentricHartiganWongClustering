@@ -22,6 +22,11 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
     new_centroids = calculate_centroids(data, assigned_clusters)
     assign_dict = {}
 
+    for i in cluster_size:
+        if i == 0:
+            print("For ", num_clusters, " clusters. Intial centroids created empty partitions.")
+            exit("Exiting")
+
     while loop_counter<num_iterations:
 
         loop_counter += 1
@@ -36,19 +41,11 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
             if check_centroid_status(curr_cluster, new_centroids, centroids):
 
                 centroid_status = True
-  
                 sse, he_indices = find_all_points_test(data, curr_cluster, new_centroids[curr_cluster], radius, assign_dict[curr_cluster])
-                # if loop_counter == 1:
-                #     print(curr_cluster, " --> He data: ", he_indices)
-                    # print(curr_cluster,  neighbors[curr_cluster])
                 
                 if len(he_indices) > 0:
                     
                     assigned_clusters, distances = calculate_sse_specific(data, new_centroids, cluster_size, he_indices, assigned_clusters, curr_cluster, sse, distances)
-
-                    # if len(i) > 0:
-                    #     print(i, updated_dist)
-                    #     distances[i] = updated_dist
 
             else:
                 centroid_status = False
@@ -64,4 +61,4 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
             break
 
     # sse = get_quality(data, new_assigned_clusters, new_centroids, num_clusters)
-    return new_centroids, loop_counter
+    return new_centroids, loop_counter, assigned_clusters

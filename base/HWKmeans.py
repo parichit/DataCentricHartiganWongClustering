@@ -87,19 +87,24 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
     centroid_status = False
     dist_mat = np.zeros((num_clusters, num_clusters))
     new_assigned_clusters = np.zeros(shape=(len(data)))
+    assign_dict = {}
 
     # Calculate the cluster assignments for data points
     assigned_clusters, distances = calculate_distances(data, centroids)
     new_assigned_clusters[:] = assigned_clusters[:]
+    cluster_size = get_size(assigned_clusters, num_clusters)
 
     # Re-calculate the centroids
     new_centroids = calculate_centroids(data, assigned_clusters)
-    assign_dict = {}
     
+    for i in cluster_size:
+        if i == 0:
+            print("For ", num_clusters, " clusters. Intial centroids created empty partitions.")
+            exit("Exiting")
     
+
     while loop_counter<num_iterations:
 
-        he_data_indices = []
         loop_counter += 1
         # print("\n", loop_counter)
         # print(new_centroids)
@@ -122,19 +127,16 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
 
                 centroid_status = True
 
-                # sse, he_indices = find_all_points_test(data, curr_cluster, new_centroids[curr_cluster], radius, assign_dict[curr_cluster])
-                # if loop_counter == 1:
-                #     print("Center: ", curr_cluster, " HE: ", he_indices)
-
                 indices = np.where(assigned_clusters == curr_cluster)[0]
                 curr_cluster_size = len(indices)
 
                 # Compare the SSE with other clusters
                 sse = distance.cdist(data[indices, :], new_centroids, 'sqeuclidean')
-                curr_sse = (curr_cluster_size * sse[:, curr_cluster])/(curr_cluster_size-1)
-
-                # if loop_counter == 6:
-                #     print(neighbors)
+                
+                if curr_cluster_size > 1:
+                    curr_sse = (curr_cluster_size * sse[:, curr_cluster])/(curr_cluster_size-1)
+                else:
+                    curr_sse = sse[:, curr_cluster]
                 
                 for ot_cluster in range(num_clusters):
                         
@@ -144,14 +146,14 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
                             ot_sse = (size_ot_cluster * sse[:, ot_cluster])/(size_ot_cluster+1)
 
                             temp_indices = np.where(ot_sse < curr_sse)[0]
-
                             
                             # Update the cluster membership for the data point
                             if len(temp_indices) > 0:
+                                he_data_indices = []
                                 temp_indices2 = indices[temp_indices].tolist()
                                 new_assigned_clusters[temp_indices2] = ot_cluster
                                 he_data_indices += temp_indices2
-
+                            
             else:
                 centroid_status = False
             
@@ -173,4 +175,4 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
             break
             
     # sse = get_quality(data, new_assigned_clusters, new_centroids, num_clusters)
-    return new_centroids, loop_counter
+    return new_centroids, loop_counter, assigned_clusters
