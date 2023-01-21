@@ -1,6 +1,6 @@
 from utils.kmeans_utils import *
 from utils.vis_utils import *
-from scipy.spatial import distance
+import sys
 
 
 def DCHWKmeans(data, num_clusters, num_iterations, seed):
@@ -25,7 +25,7 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
     for i in cluster_size:
         if i == 0:
             print("For ", num_clusters, " clusters. Intial centroids created empty partitions.")
-            exit("Exiting")
+            return centroids, loop_counter, sys.float_info.max, assigned_clusters
 
     while loop_counter<num_iterations:
 
@@ -55,6 +55,10 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
         centroids[:] = new_centroids[:]
         new_centroids = calculate_centroids(data, assigned_clusters)
         cluster_size = get_size(assigned_clusters, num_clusters)
+
+        if len(np.unique(assigned_clusters)) < num_clusters:
+            print("HWKMeans: Found less modalities, safe exiting with current centroids.")
+            return new_centroids, loop_counter, sys.float_info.max, assigned_clusters
 
         if centroid_status == False:
             print("Convergence at iteration: ", loop_counter)

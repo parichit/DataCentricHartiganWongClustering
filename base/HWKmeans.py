@@ -1,6 +1,7 @@
 from utils.kmeans_utils import *
 from utils.vis_utils import *
 from scipy.spatial import distance
+import sys
 
 
 def HWKmeans_test(data, num_clusters, num_iterations, seed):
@@ -100,7 +101,7 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
     for i in cluster_size:
         if i == 0:
             print("For ", num_clusters, " clusters. Intial centroids created empty partitions.")
-            exit("Exiting")
+            return centroids, loop_counter, sys.float_info.max, assigned_clusters
     
 
     while loop_counter<num_iterations:
@@ -156,6 +157,10 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
                             
             else:
                 centroid_status = False
+
+        if len(np.unique(new_assigned_clusters)) < num_clusters:
+            print("HWKMeans: Found less modalities, safe exiting with current centroids.")
+            return new_centroids, loop_counter, sys.float_info.max, assigned_clusters
             
         # if len(he_data_indices) > 0 and loop_counter == 1:
         #     print("Data that actually changed it's membership: ", he_data_indices)
@@ -175,4 +180,4 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
             break
             
     sse = get_quality(data, new_assigned_clusters, new_centroids, num_clusters)
-    return new_centroids, loop_counter, assigned_clusters, sse
+    return new_centroids, loop_counter, sse, assigned_clusters
