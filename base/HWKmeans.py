@@ -174,5 +174,5 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
             print("Convergence at iteration: ", loop_counter)
             break
             
-    # sse = get_quality(data, new_assigned_clusters, new_centroids, num_clusters)
-    return new_centroids, loop_counter, assigned_clusters
+    sse = get_quality(data, new_assigned_clusters, new_centroids, num_clusters)
+    return new_centroids, loop_counter, assigned_clusters, sse
