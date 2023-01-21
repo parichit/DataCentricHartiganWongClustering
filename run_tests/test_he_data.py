@@ -23,7 +23,7 @@ file_list = ['magic.csv']
 # file_list = ['user_knowledge_train.csv']
 # file_list = ['hapt_train.csv']
 # file_list = ['covertype.csv']
-# file_list = ['spambase.csv']
+file_list = ['spambase.csv']
 # file_list = ['crop.csv']
 
 data_path = "/Users/schmuck/Documents/OneDrive - Indiana University/Box Sync/PhD/DATASETS"
@@ -41,7 +41,7 @@ file_path = os.path.join(data_path, "real_data")
 # Set parameters
 num_iterations = 100
 clusters = [i for i in range(2, 10, 1)]
-# clusters = [12]
+clusters = [30]
  
 # seeds = np.random.randint(1, 1200, 1000)
 seeds= [12]
@@ -59,12 +59,12 @@ for data_file in file_list:
             print("\nNum clusters: ", num_clusters, "\n")
 
             hw_start_time = time.time()
-            hw_centroids, hw_iter, hw_labels, hw_sse = HWKmeans(data, num_clusters, num_iterations, seed)
+            hw_centroids, hw_iter, hw_sse, hw_labels = HWKmeans(data, num_clusters, num_iterations, seed)
             hw_TraningTime = round(time.time() - hw_start_time, 5)
             # print(hw_centroids)
 
             dchw_start_time = time.time()
-            dchw_centroids, dchw_iter, dchw_labels, dchw_sse = DCHWKmeans(data, num_clusters, num_iterations, seed)
+            dchw_centroids, dchw_iter, dchw_sse, dchw_labels = DCHWKmeans(data, num_clusters, num_iterations, seed)
             dchw_TraningTime = round(time.time() - dchw_start_time, 5)
 
             dev = np.sum(np.square(hw_centroids - dchw_centroids))
@@ -83,7 +83,4 @@ for data_file in file_list:
             # hw_start_time = time.time()
             # hw_centroids, hw_iter, hw_labels = HWKmeans_test123(data, num_clusters, num_iterations, seed)
             # hw_TraningTime = round(time.time() - hw_start_time, 5)
-
-            
-
 
