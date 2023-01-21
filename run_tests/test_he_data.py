@@ -40,19 +40,16 @@ file_path = os.path.join(data_path, "real_data")
 
 # Set parameters
 num_iterations = 100
-clusters = [i for i in range(11, 21, 1)]
-clusters = [15]
-
-seed = 1245 
-seeds = np.random.randint(1, 1200, 1000)
+clusters = [i for i in range(2, 10, 1)]
+clusters = [12]
+ 
+# seeds = np.random.randint(1, 1200, 1000)
 seeds= [12]
 
 
 for data_file in file_list:
 
     data, labels = read_simulated_data(os.path.join(file_path, data_file))
-    # data = np.load(os.path.join(file_path, "264792_4_0.001_1000000000_.npy"))
-    # data = np.load(data_file)
     print("Data Shape :", data.shape)
 
     for seed in seeds:
@@ -61,30 +58,31 @@ for data_file in file_list:
 
             print("\nNum clusters: ", num_clusters, "\n")
 
-            # hw_start_time = time.time()
-            # hw_centroids, hw_iter, hw_labels = HWKmeans(data, num_clusters, num_iterations, seed)
-            # hw_TraningTime = round(time.time() - hw_start_time, 5)
-
-            # dchw_start_time = time.time()
-            # dchw_centroids, dchw_iter, dchw_labels = DCHWKmeans(data, num_clusters, num_iterations, seed)
-            # dchw_TraningTime = round(time.time() - dchw_start_time, 5)
-
-            # dev = np.sum(np.square(hw_centroids - dchw_centroids))
-            
-            # if dev != 0:
-            #     print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
-            #     print("Deviation is ", dev, " for ",  num_clusters, " clusters")
-            #     print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
-                
-            #     temp1 = check_ARI(labels, hw_labels)
-            #     temp2 = check_ARI(labels, dchw_labels)
-            #     print("ARI: ", temp1, "\t", temp2)
-
-            # print("Time", hw_TraningTime, dchw_TraningTime)
-
             hw_start_time = time.time()
-            hw_centroids, hw_iter, hw_labels = HWKmeans_test123(data, num_clusters, num_iterations, seed)
+            hw_centroids, hw_iter, hw_labels, hw_sse = HWKmeans(data, num_clusters, num_iterations, seed)
             hw_TraningTime = round(time.time() - hw_start_time, 5)
+            # print(hw_centroids)
+
+            dchw_start_time = time.time()
+            dchw_centroids, dchw_iter, dchw_labels, dchw_sse = DCHWKmeans(data, num_clusters, num_iterations, seed)
+            dchw_TraningTime = round(time.time() - dchw_start_time, 5)
+
+            dev = np.sum(np.square(hw_centroids - dchw_centroids))
+            
+            if dev != 0:
+                print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
+                print("Deviation is ", dev, " for ",  num_clusters, " clusters")
+                print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
+                
+                temp1 = check_ARI(labels, hw_labels)
+                temp2 = check_ARI(labels, dchw_labels)
+                print("ARI: ", temp1, "\t", temp2)
+
+            print("Time", hw_TraningTime, dchw_TraningTime)
+
+            # hw_start_time = time.time()
+            # hw_centroids, hw_iter, hw_labels = HWKmeans_test123(data, num_clusters, num_iterations, seed)
+            # hw_TraningTime = round(time.time() - hw_start_time, 5)
 
             
 
