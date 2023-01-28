@@ -260,7 +260,7 @@ def get_membership(assigned_clusters, distances, num_clusters, assign_dict):
     for i in range(num_clusters):
         indices = np.where(assigned_clusters == i)[0]
         assign_dict[i] = indices
-        radius[i] = np.max(distances[indices])
+        radius[i] = (len(indices)/len(indices)-1)*np.max(distances[indices])
 
     return assign_dict, radius
 

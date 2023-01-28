@@ -8,7 +8,7 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
     loop_counter = 0
 
     centroids = init_centroids(data, num_clusters, seed)
-    print("Initialized centroids manually")
+    # print("Initialized centroids manually")
 
     # Centroid status checker
     centroid_status = False
@@ -57,7 +57,7 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
         cluster_size = get_size(assigned_clusters, num_clusters)
 
         if len(np.unique(assigned_clusters)) < num_clusters:
-            print("HWKMeans: Found less modalities, safe exiting with current centroids.")
+            print("DCHWKMeans: Found less modalities, safe exiting with current centroids.")
             return new_centroids, loop_counter, sys.float_info.max, assigned_clusters
 
         if centroid_status == False:
@@ -65,4 +65,4 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
             break
 
     sse = get_quality(data, assigned_clusters, new_centroids, num_clusters)
-    return new_centroids, loop_counter, assigned_clusters, sse
+    return new_centroids, loop_counter, sse, assigned_clusters

@@ -22,6 +22,7 @@ def read_data(input_loc):
     return data, labels
 
 
+
 def read_simulated_data(file_path):
 
     data = pd.read_csv(file_path, sep=",")
@@ -32,7 +33,6 @@ def read_simulated_data(file_path):
 
 
 def read_simulated_data123(file_path):
-
     data = pd.read_csv(file_path, sep=",")
     return np.array(data)
 

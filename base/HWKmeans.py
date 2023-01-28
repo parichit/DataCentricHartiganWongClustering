@@ -158,6 +158,7 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
             else:
                 centroid_status = False
 
+        
         if len(np.unique(new_assigned_clusters)) < num_clusters:
             print("HWKMeans: Found less modalities, safe exiting with current centroids.")
             return new_centroids, loop_counter, sys.float_info.max, assigned_clusters

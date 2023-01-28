@@ -176,9 +176,10 @@ def get_quality(data, final_assign, final_centroids, num_clusters):
 
     final_sse = 0
 
-    for i in range(len(final_centroids)):
+    for i in range(num_clusters):
         indices = np.where(final_assign == i)[0]
-        final_sse += np.sqrt(np.sum(np.square(data[indices, :] - final_centroids[i, :])))
+        final_sse += np.sum(np.square(data[indices, :] - final_centroids[i, :]))
+        # print(i, final_sse)
 
     final_sse /= num_clusters
 

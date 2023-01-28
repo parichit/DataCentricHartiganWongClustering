@@ -23,10 +23,10 @@ file_list = ['magic.csv']
 # file_list = ['user_knowledge_train.csv']
 # file_list = ['hapt_train.csv']
 # file_list = ['covertype.csv']
-file_list = ['spambase.csv']
+# file_list = ['spambase.csv']
 # file_list = ['crop.csv']
 
-data_path = "/Users/schmuck/Documents/OneDrive - Indiana University/Box Sync/PhD/DATASETS"
+data_path = "/Users/schmuck/Documents/OneDrive - Indiana University/Box Sync/PhD/DATASETS/"
 # data_path = "/Users/schmuck/Library/CloudStorage/OneDrive-IndianaUniversity/Box Sync/PhD/DataCentricHartiganWongClustering"
 
 # Make changes for adjusting the current directory here
@@ -40,16 +40,16 @@ file_path = os.path.join(data_path, "real_data")
 
 # Set parameters
 num_iterations = 100
-clusters = [i for i in range(2, 10, 1)]
-clusters = [30]
+clusters = [i for i in range(5, 30, 5)]
+clusters = [11]
  
 # seeds = np.random.randint(1, 1200, 1000)
-seeds= [12]
+seeds= [9]
 
 
 for data_file in file_list:
 
-    data, labels = read_simulated_data(os.path.join(file_path, data_file))
+    data = read_simulated_data123(os.path.join(file_path, data_file))
     print("Data Shape :", data.shape)
 
     for seed in seeds:
@@ -74,10 +74,12 @@ for data_file in file_list:
                 print("Deviation is ", dev, " for ",  num_clusters, " clusters")
                 print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
                 
-                temp1 = check_ARI(labels, hw_labels)
-                temp2 = check_ARI(labels, dchw_labels)
-                print("ARI: ", temp1, "\t", temp2)
+                # temp1 = check_ARI(labels, hw_labels)
+                # temp2 = check_ARI(labels, dchw_labels)
+                temp =  check_ARI(hw_labels, dchw_labels)
+                print("ARI: ", temp)
 
+            print(dchw_sse)
             print("Time", hw_TraningTime, dchw_TraningTime, hw_sse, dchw_sse)
 
             # hw_start_time = time.time()
