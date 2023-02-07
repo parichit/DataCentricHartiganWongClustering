@@ -18,12 +18,12 @@ def HWKmeans_test123(data, num_clusters, num_iterations, seed):
     # Calculate the cluster assignments for data points
     assigned_clusters, distances = calculate_distances(data, centroids)
     new_assigned_clusters[:] = assigned_clusters[:]
-    cluster_size = get_size(assigned_clusters, num_clusters)
+    cluster_info = get_size(assigned_clusters, num_clusters)
 
     # Re-calculate the centroids
     new_centroids = calculate_centroids(data, assigned_clusters)
     
-    for i in cluster_size:
+    for i in cluster_info:
         if i == 0:
             print("For ", num_clusters, " clusters. Intial centroids created empty partitions.")
             exit("Exiting")
@@ -49,7 +49,7 @@ def HWKmeans_test123(data, num_clusters, num_iterations, seed):
                 #     print("Center: ", curr_cluster, " HE: ", he_indices)
 
                 indices = np.where(assigned_clusters == curr_cluster)[0]
-                curr_cluster_size = len(indices)
+                curr_cluster_info = len(indices)
 
                 # Compare the SSE with other clusters
                 sse = distance.cdist(data[indices, :], new_centroids, 'sqeuclidean')
@@ -59,8 +59,8 @@ def HWKmeans_test123(data, num_clusters, num_iterations, seed):
                 # if (np.round(he_sse, 2).any() != np.round(sse[:, curr_cluster], 2).any()):
                 #     print("SSE mismatch for clusters: ", curr_cluster)
                 
-                if curr_cluster_size > 1:
-                    curr_sse = (curr_cluster_size * sse[:, curr_cluster])/(curr_cluster_size-1)
+                if curr_cluster_info > 1:
+                    curr_sse = (curr_cluster_info * sse[:, curr_cluster])/(curr_cluster_info-1)
                 else:
                     curr_sse = sse[:, curr_cluster]
 
@@ -93,7 +93,7 @@ def HWKmeans_test123(data, num_clusters, num_iterations, seed):
                                         temp += [i]
                                 
                                 if len(temp) >0:
-                                    print(curr_cluster_size, size_ot_cluster, curr_cluster, ot_cluster)
+                                    print(curr_cluster_info, size_ot_cluster, curr_cluster, ot_cluster)
                                     print(len(he_indices), len(he_data_indices), len(temp))
 
                                     vis_data_with_he_test(data, centroids, assigned_clusters, distances, [curr_cluster, ot_cluster],

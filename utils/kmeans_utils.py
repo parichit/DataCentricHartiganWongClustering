@@ -8,6 +8,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
+import sys
 
 
 def init_centroids(data, num_clusters, seed):
@@ -28,40 +29,98 @@ def calculate_distances(data, centroids):
 
     for i in range(n):
         dist_mat[i, :] = np.sqrt(np.sum(np.square(data[i] - centroids), 1))
+        # dist_mat[i, :] = np.sum(np.square(data[i] - centroids), 1)
 
     return np.argmin(dist_mat, axis=1), np.round(np.min(dist_mat, axis=1), 5)
 
 
 
-def calculate_sse_specific(data, new_centroids, cluster_size, he_data_indices, assigned_clusters, 
-curr_cluster, my_sse, distances):
+# def calculate_sse_specific(data, new_centroids, cluster_info, he_data_indices, assigned_clusters, 
+# curr_cluster, my_sse, distances):
 
-    curr_cluster_size = cluster_size[curr_cluster]
+#     curr_cluster_info = cluster_info[curr_cluster]
+
+#     sse = distance.cdist(data[he_data_indices, :], new_centroids, 'sqeuclidean')
+#     sse_copy = np.zeros(shape=sse.shape)
+#     sse_copy[:] = sse[:]
+
+#     if curr_cluster_info > 1:
+#         sse[:, curr_cluster] = (curr_cluster_info * sse[:, curr_cluster])/(curr_cluster_info-1)
+
+#     # if curr_cluster_info > 1:
+#     #     my_sse = (curr_cluster_info * my_sse)/(curr_cluster_info-1)
+#     my_sse = sse[:, curr_cluster]
+#     all_indices = []
+    
+#     for ot_cluster in range(len(new_centroids)):
+                        
+#         if ot_cluster != curr_cluster:
+            
+#             # print(curr_cluster, ot_cluster)
+#             size_ot_cluster = cluster_info[ot_cluster]
+#             sse[:, ot_cluster] = (size_ot_cluster * sse[:, ot_cluster])/(size_ot_cluster+1)
+#             ot_sse = sse[:, ot_cluster]
+
+#             temp_indices = np.where(ot_sse < my_sse)[0]
+            
+#             # Update the cluster membership for the data point
+#             if len(temp_indices) > 0:
+#                 # temp_indices2 = he_data_indices[temp_indices].tolist()
+#                 # assigned_clusters[temp_indices2] = ot_cluster
+
+#                 # distances[temp_indices2] = np.min(ot_sse[temp_indices,])
+#                 # distances[temp_indices2] = ot_sse[temp_indices]
+#                 all_indices += list(temp_indices)
+    
+#     if len(all_indices) > 0 :
+#         all_indices = np.unique(all_indices)
+#         min_dist = np.min(sse_copy[all_indices, :], axis=1)
+#         new_clus = np.argmin(sse[all_indices, :], axis=1)
+#         temp = he_data_indices[all_indices].tolist()
+#         # print(temp)
+#         assigned_clusters[temp] = new_clus
+#         distances[temp] = min_dist
+
+#     return assigned_clusters, distances
+
+
+def calculate_sse_specific(data, new_centroids, he_data_indices, mysize, assigned_clusters, 
+curr_cluster, cluster_info):
 
     sse = distance.cdist(data[he_data_indices, :], new_centroids, 'sqeuclidean')
+    sse_copy = np.zeros(shape=sse.shape)
+    sse_copy[:] = sse[:]
 
-    if curr_cluster_size > 1:
-        my_sse = (curr_cluster_size * my_sse)/(curr_cluster_size-1)
+    if mysize > 1:
+        sse[:, curr_cluster] = (mysize * sse[:, curr_cluster])/(mysize-1)
+
+    all_indices = []
     
     for ot_cluster in range(len(new_centroids)):
                         
-        if curr_cluster != ot_cluster:
+        if ot_cluster != curr_cluster:
             
-            size_ot_cluster = cluster_size[ot_cluster]
-            ot_sse = (size_ot_cluster * sse[:, ot_cluster])/(size_ot_cluster+1)
+            # size_ot_cluster = len(np.where(assigned_clusters == ot_cluster)[0])
+            sse[:, ot_cluster] = (cluster_info[ot_cluster] * sse[:, ot_cluster])/(cluster_info[ot_cluster]+1)
 
-            temp_indices = np.where(ot_sse < my_sse)[0]
+            temp_indices = np.where(sse[:, ot_cluster] < sse[:, curr_cluster])[0]
             
             # Update the cluster membership for the data point
             if len(temp_indices) > 0:
-                temp_indices2 = he_data_indices[temp_indices].tolist()
-                # print("Data that actually changed its membership: ", temp_indices2, " old: ", curr_cluster, " new: ", ot_cluster)
-                assigned_clusters[temp_indices2] = ot_cluster
+                all_indices += list(temp_indices)
+    
 
-                distances[temp_indices2] = np.sqrt(np.min(sse[temp_indices, :]))
+    if len(all_indices) > 0 :
+        all_indices = np.unique(all_indices)
+        new_clus = np.argmin(sse[all_indices, :], axis=1)
+        temp = he_data_indices[all_indices].tolist()
+        assigned_clusters[temp] = new_clus
 
-    return assigned_clusters, distances
+        # print("\n")
+        # print("Actual Change: ", temp)
+        # print("Predicted: ", he_data_indices)
 
+    return assigned_clusters
 
 
 def calculate_centroids(data, assigned_clusters):
@@ -72,9 +131,16 @@ def calculate_centroids(data, assigned_clusters):
     return np.round(new_centroids, 5)
 
 
-
 def check_centroid_status(curr_cluster, new_centroids, centroids):
-    return (centroids[curr_cluster,:] != new_centroids[curr_cluster,:]).all()
+    
+    for i in range(centroids.shape[0]):
+        for j in range(len(centroids[0])):
+            
+            if new_centroids[i][j] != centroids[i][j]:
+                return True
+    
+    return False
+
 
 
 def pred_membership(data, centroids):
@@ -168,7 +234,6 @@ def sse_after_move(data, new_centroids, sse1, lowest_sse, index, curr_cluster, o
     if sse2 < sse1:
         status = True
         print(index, curr_cluster, ot_cluster, sse1, sse2)
-
     return status
 
 
