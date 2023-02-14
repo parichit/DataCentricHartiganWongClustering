@@ -24,7 +24,7 @@ file_list = ['50_2_10.csv']
 # file_list = ['hapt_train.csv']
 # file_list = ['covertype.csv']
 file_list = ['spambase.csv']
-# file_list = ['crop.csv']
+file_list = ['crop.csv']
 
 data_path = "/Users/schmuck/Documents/OneDrive - Indiana University/Box Sync/PhD/DATASETS/"
 # data_path = "/Users/schmuck/Library/CloudStorage/OneDrive-IndianaUniversity/Box Sync/PhD/DataCentricHartiganWongClustering"
@@ -40,11 +40,12 @@ file_path = os.path.join(data_path, "real_data", "experiment_data")
 
 # Set parameters
 num_iterations = 100
-clusters = [i for i in range(5, 15)]
-clusters = [5]
+clusters = [i for i in range(5, 11)]
+clusters = [19]
  
 # seeds = np.random.randint(1, 1200, 1000)
 seeds= [9]
+
 
 
 for data_file in file_list:
