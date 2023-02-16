@@ -4,6 +4,7 @@ sys.path.append("../")
 from utils.dataIO import *
 from base.HWKmeans import *
 from base.DCHWKmeans import *
+from base.DCHWKMeans_vec import *
 from base.test_both_algos import *
 from pathlib import Path
 import time
@@ -19,12 +20,12 @@ Algo2: HWDCKMeans
 file_list = ['50_2_10.csv']
 
 # file_list = ['ijcnn.csv']
-# file_list = ['magic.csv']
+file_list = ['magic.csv']
 # file_list = ['user_knowledge_train.csv']
 # file_list = ['hapt_train.csv']
 # file_list = ['covertype.csv']
-file_list = ['spambase.csv']
-file_list = ['crop.csv']
+# file_list = ['spambase.csv']
+# file_list = ['crop.csv']
 
 data_path = "/Users/schmuck/Documents/OneDrive - Indiana University/Box Sync/PhD/DATASETS/"
 # data_path = "/Users/schmuck/Library/CloudStorage/OneDrive-IndianaUniversity/Box Sync/PhD/DataCentricHartiganWongClustering"
@@ -40,12 +41,11 @@ file_path = os.path.join(data_path, "real_data", "experiment_data")
 
 # Set parameters
 num_iterations = 100
-clusters = [i for i in range(5, 11)]
-clusters = [19]
+clusters = [i for i in range(2, 21)]
+clusters = [5]
  
 # seeds = np.random.randint(1, 1200, 1000)
 seeds= [9]
-
 
 
 for data_file in file_list:
@@ -67,20 +67,25 @@ for data_file in file_list:
             # dchw_start_time = time.time()
             # dchw_centroids, dchw_iter, dchw_sse, dchw_labels = DCHWKmeans(data, num_clusters, num_iterations, seed)
             # dchw_TraningTime = round(time.time() - dchw_start_time, 5)
+            print("\n")
 
-            # dev = np.sum(np.square(hw_centroids - dchw_centroids))
+            dchw_start_time = time.time()
+            dchw_centroids, dchw_iter, dchw_sse, dchw_labels = DCHWKmeans_vec(data, num_clusters, num_iterations, seed)
+            dchw_TraningTime = round(time.time() - dchw_start_time, 5)
+
+            dev = np.sum(np.square(hw_centroids - dchw_centroids))
             
-            # if dev != 0:
-            #     print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
-            #     print("Deviation is ", dev, " for ",  num_clusters, " clusters")
-            #     print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
+            if dev != 0:
+                print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
+                print("Deviation is ", dev, " for ",  num_clusters, " clusters")
+                print("%%%%%%%%%%%%%%%%%%%%%%%%%%")
                 
             #     # temp1 = check_ARI(labels, hw_labels)
             #     # temp2 = check_ARI(labels, dchw_labels)
             #     # temp =  check_ARI(hw_labels, dchw_labels)
             #     # print("ARI: ", temp1, temp2)
 
-            # print("Time", hw_TraningTime, dchw_TraningTime, hw_sse, dchw_sse)
+            print("Time", hw_TraningTime, dchw_TraningTime, hw_sse, dchw_sse)
             # print(hw_centroids)
 
             # hw_start_time = time.time()

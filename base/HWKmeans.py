@@ -104,196 +104,117 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
     while loop_counter<num_iterations:
 
         loop_counter += 1
-
         all_indices = []
-        all_data_changed = []
-        centroid_motion = []
 
         # for i in range(num_clusters):
         #     # centroid_motion.append(np.sqrt(np.sum(np.square(new_centroids[i] - centroids[i]))))
         #     centroid_motion.append(np.sum(np.square(new_centroids[i] - centroids[i])))
         # distances += centroid_motion
-        
+
+        # print(loop_counter)
         # dist_mat = distance.cdist(new_centroids, new_centroids, "euclidean")
-        # cluster_info = get_size(assigned_clusters, num_clusters)
-
-        dist_mat = distance.cdist(new_centroids, new_centroids, "euclidean")
         assign_dict, radius, cluster_info = get_membership(assigned_clusters, distances, num_clusters)
+        # print(radius[3], dist_mat[3, 2]/2, radius[2])
 
-        # assign_dict, radius = get_membership(assigned_clusters, distances, num_clusters)
-        
-        # if loop_counter == 1:
-        #     print("Old Distances: ", distances[39, 1], distances[39, 3])
-        #     # temp1 = np.sqrt(np.sum(np.square(new_centroids[1] - data[39])))
-        #     # temp2 = np.sqrt(np.sum(np.square(new_centroids[3] - data[39])))
-        #     temp1 = np.sum(np.square(new_centroids[1] - data[39]))
-        #     temp2 = np.sum(np.square(new_centroids[3] - data[39]))
-        #     print("Distance from new centroids: ", temp1, temp2)
-        #     print("Cluster radius: ", radius[1], radius[3])
-        #     print("half the radius: ", radius[1]/2, radius[3]/2)
-        #     # temp3 = np.sqrt(np.sum(np.square(data[39] - ((new_centroids[1] + new_centroids[3])/2))))
-        #     temp3 = np.sum(np.square(data[39] - ((new_centroids[1] + new_centroids[3])/2)))
-        #     print("Dist from modpoint: ", temp3)
+        # if loop_counter >= 4:
+        #     print(dist_mat)
+        #     print(new_centroids, loop_counter)
+        #     for i in range(len(cluster_info)):
+        #         print(cluster_info[i], len(assign_dict[i]))
 
-        #     print("Distance between new centroids: ", dist_mat[1, 3]/2)
+        # neighbors, he_indices = find_all_he_indices_neighbor(data, new_centroids, radius, 
+        #                                                                  assign_dict, cluster_info)
+        # for k in he_indices.keys():
+        #     all_indices += he_indices[k]
 
-        # if loop_counter == 1:
-        #     print("Old Distances: ", distances[14, 1], distances[14, 3])
-        #     print("Centroid motion: ", centroid_motion[1], centroid_motion[3])
-        #     # temp1 = np.sqrt(np.sum(np.square(new_centroids[1] - data[14])))
-        #     # temp2 = np.sqrt(np.sum(np.square(new_centroids[3] - data[14])))
-        #     temp1 = np.sum(np.square(new_centroids[1] - data[14]))
-        #     temp2 = np.sum(np.square(new_centroids[3] - data[14]))
-        #     print("Distance from new centroids: ", temp1, temp2)
-        #     print("Distance between new centroids: ", dist_mat[1, 3])
+        # print("Counter", loop_counter)
+        # print("Num of HE:", len(all_indices), "Cluster Size: ", cluster_info)
         
         for curr_cluster in range(num_clusters):
 
             if check_centroid_status(curr_cluster, new_centroids, centroids):
 
-                centroid_status = True
-                indices = np.where(assigned_clusters == curr_cluster)[0]
+                centroid_status = True  
 
-                if cluster_info[curr_cluster] > 1:
-
-                    # if loop_counter == 4 and curr_cluster == 0:
-                    #     print(len(indices), assigned_clusters[0])
-
-                    # Compare the SSE with other clusters
-                    sse = distance.cdist(data[indices, :], new_centroids, 'sqeuclidean')
-                    sse_copy = np.zeros(shape=sse.shape)
-                    sse_copy[:] = sse[:]
+                # Compare the SSE with other clusters
+                if cluster_info[curr_cluster] > 1:  
                     
-                    sse[:, curr_cluster] = (len(indices) * sse[:, curr_cluster])/(len(indices)-1)
-                    curr_sse = sse[:, curr_cluster]
+                    indices = assign_dict[curr_cluster]
+                    sse = calculate_sse(data[indices, :], new_centroids)
 
-                    # if curr_cluster == 1:
-                    #     i = np.where(indices == 14)[0]
-                    #     print("Loop: ", sse[i, curr_cluster], "\t", sse[i, 3])
-                    
-                    # all_indices = []
-                    # he_indices = find_he(data, new_centroids[curr_cluster], dist_mat, indices, 
-                    # curr_cluster, num_clusters, cluster_info)
-                    
-                    # he_indices = find_he_by_radius(data, new_centroids[curr_cluster], radius, indices, num_clusters)
+                    my_size = cluster_info[curr_cluster]/(cluster_info[curr_cluster]-1)
+                    sse[:, curr_cluster] = sse[:, curr_cluster] * my_size
 
-                    # _, he_indices_dict = find_all_he_indices_neighbor(data, new_centroids, radius,
-                    #                             assign_dict)
-                    # for i in he_indices_dict.keys():
-                    #     if len(he_indices_dict[i]) > 0:
-                    #         all_indices += list(he_indices_dict[i])
-
-                    he_indices, _, _ = find_he_new(data, new_centroids[curr_cluster], dist_mat, indices, 
-                        curr_cluster, num_clusters, cluster_info, distances)
-                    
-                    all_indices += list(he_indices)
-                    data_changed = []
-                
                     for ot_cluster in range(num_clusters):
                             
                         if ot_cluster != curr_cluster:
-                                
-                            size_ot_cluster = len(np.where(assigned_clusters == ot_cluster)[0])
-                            sse[:, ot_cluster] = (size_ot_cluster * sse[:, ot_cluster])/(size_ot_cluster+1)
-
-                            ot_sse = sse[:, ot_cluster]
-
-                            # if ot_cluster == 3:
-                            #     i = np.where(indices == 14)[0]
-                            #     print("other: ", size_ot_cluster/(size_ot_cluster+1), "\t", sse[i, 3])
-
-                            temp_indices = np.where(ot_sse < curr_sse)[0]
                             
-                            if len(temp_indices) > 0:
-                                data_changed += list(temp_indices)
+                            ot_size = cluster_info[ot_cluster]/(cluster_info[ot_cluster]+1)
+                            
+                            #if cluster_info[ot_cluster] > 1:
+                            sse[:, ot_cluster] = sse[:, ot_cluster] * ot_size
 
-                    # Update cluster membership for data point
-                    if len(data_changed) > 0 :
-                        data_changed = np.unique(data_changed)
-                        new_clus = np.argmin(sse[data_changed, :], axis=1)
-                        temp = indices[data_changed].tolist()
-                        
-                        # assigned_clusters[temp] = new_clus
-                        new_assigned_clusters[temp] = new_clus
-                        # print(new_assigned_clusters[temp])
+                    new_assigned_clusters[indices] = np.argmin(sse, axis=1)
+                    distances[indices] = np.sqrt(np.min(sse, axis=1))
 
-                        # min_dist = np.sqrt(np.min(sse_copy[data_changed, :], axis=1))
-                        min_dist = np.min(sse_copy[data_changed, :], axis=1)
-                        distances[temp] = min_dist
-
-                        # print("Loop counter: ", loop_counter, " Current: ", curr_cluster, " Other: ", ot_cluster)
-                        # print("Predicted: ", he_indices, " Actual Change: ", temp)
-                        
-                        all_data_changed += temp
-
-                # break
             else:
                 centroid_status = False
 
-        
-        if len(np.unique(assigned_clusters)) < num_clusters:
-            print("HWKMeans: Found less modalities, safe exiting with current centroids.")
-            return new_centroids, loop_counter, sys.float_info.max, assigned_clusters
-            
-        if len(all_data_changed) > 0:
+        # t  = np.where(assigned_clusters != new_assigned_clusters)[0]
+        # print("Counter:", loop_counter)
+        # print("Num change: ", len(t), "Data Changed: ", t)
+        # print("Old: ", assigned_clusters[t], "New: ", new_assigned_clusters[t])
+        # if len(all_indices) > 0:
+        #     temp = np.where(assigned_clusters != new_assigned_clusters)[0] 
+        #     all_indices = list(np.unique(all_indices))
             # print("Loop Counter: ", loop_counter)
-            print("\nSize of changed: ", len(all_data_changed), " Predicted: ", len(all_indices))
-            # print("Data that actually changed it's membership: ", all_data_changed)
+            # print("\nSize of changed: ", len(temp), " Predicted: ", len(all_indices))
+            # print("Data that actually changed it's membership: ", temp)
             # print("Predicted:", all_indices)
-            for i in all_data_changed:
-                if i not in all_indices:
-                    print("#############################")
-                    print("Loop Counter: ", loop_counter)
-                    print(i, " not found in Prediction")
-                    print("#############################")
-
+            
+            # for i in temp:
+            #     if i not in all_indices:
+            #         print("#############################")
+            #         print("Loop Counter: ", loop_counter)
+            #         print(i, " not found in Prediction")
+            #         print("#############################")
+            
             #         new_clus =  int(new_assigned_clusters[i])
             #         old_clus =  assigned_clusters[i]
             #         old_fac = cluster_info[old_clus]/(cluster_info[old_clus]-1)
             #         new_fac = cluster_info[new_clus]/(cluster_info[new_clus]+1)
+            #         temp2 = np.sum(np.square(data[i, :] - new_centroids[old_clus, :]))
+            #         ntemp2 = temp2 * old_fac
             #         temp1 = np.sum(np.square(data[i, :] - new_centroids[new_clus, :]))
-            #         temp2 = np.sum(np.square(data[i, :] - new_centroids[assigned_clusters[i], :]))
-            #         ntemp1 = (temp1 * cluster_info[new_clus])/(cluster_info[new_clus]+1)
-            #         ntemp2 = (temp2 * cluster_info[old_clus])/(cluster_info[old_clus]-1)
+            #         ntemp1 = temp1 * new_fac
             #         temp3 = np.sqrt(np.sum(np.square(data[i, :] - new_centroids[new_clus, :])))
-            #         temp4 = np.sqrt(np.sum(np.square(data[i, :] - new_centroids[assigned_clusters[i], :])))
+            #         temp4 = np.sqrt(np.sum(np.square(data[i, :] - new_centroids[old_clus, :])))
             #         print("Data: ", i, " Old cluster: ", old_clus, "/", old_fac , " New Cluster: ", new_clus, "/", new_fac)
             #         print("Old SSE:", temp2, "/", ntemp2, " New SSE: ", temp1, "/", ntemp1, 
             #           "Old Dist: ", temp4, " New Dist: ", temp3)
-                    break
+            #         print("distance between the centroids: ", dist_mat[old_clus, new_clus])
+            #         print("Old Size: ", cluster_info[old_clus], " New Size: ", cluster_info[new_clus])
+            #         centroid_status = False
+            #         # vis_data_with_he(data, new_centroids, neighbors, assigned_clusters, radius, loop_counter, [i], [])
+                    # break
 
-            # for i in all_data_changed:
+            # for i in temp:
             #     print("Point: ", i, " Old center: ", assigned_clusters[i], "\t", "new center: ", new_assigned_clusters[i])
-
-            # for i in all_data_changed:
-            #     new_clus =  int(new_assigned_clusters[i])
-            #     old_clus =  assigned_clusters[i]
-            #     old_fac = cluster_info[old_clus]/(cluster_info[old_clus]-1)
-            #     new_fac = cluster_info[new_clus]/(cluster_info[new_clus]+1)
-            #     temp1 = np.sum(np.square(data[i, :] - new_centroids[new_clus, :]))
-            #     temp2 = np.sum(np.square(data[i, :] - new_centroids[assigned_clusters[i], :]))
-            #     ntemp1 = (temp1 * cluster_info[new_clus])/(cluster_info[new_clus]+1)
-            #     ntemp2 = (temp2 * cluster_info[old_clus])/(cluster_info[old_clus]-1)
-            #     temp3 = np.sqrt(np.sum(np.square(data[i, :] - new_centroids[new_clus, :])))
-            #     temp4 = np.sqrt(np.sum(np.square(data[i, :] - new_centroids[assigned_clusters[i], :])))
-            #     print("Data: ", i, " Old cluster: ", old_clus, "/", old_fac , " New Cluster: ", new_clus, "/", new_fac)
-            #     print("Old SSE:", temp2, "/", ntemp2, " New SSE: ", temp1, "/", ntemp1, 
-            #           "Old Dist: ", temp4, " New Dist: ", temp3)
-
-
-            # vis_data_with_he(data, new_centroids, assigned_clusters, distances, loop_counter, all_data_changed, [])
-
-            # vis_data_with_he_test(data, new_centroids, assigned_clusters, radius, loop_counter, all_data_changed, [])
+            # 
+            # vis_data_with_he_test(data, new_centroids, neighbors, assigned_clusters, radius, loop_counter, temp, all_indices)
+        
+        if len(np.unique(new_assigned_clusters)) < num_clusters:
+            print("HWKMeans: Found less modalities, safe exiting with current centroids.")
+            return new_centroids, loop_counter, sys.float_info.max, new_assigned_clusters
         
         if centroid_status == False:
-            print("Convergence at iteration: ", loop_counter)
+            print("Convergence at iteration: ", loop_counter, "\n")
             break
-
+        
         # Re-calculate the centroids
         centroids[:] = new_centroids[:]
         new_centroids = calculate_centroids(data, new_assigned_clusters)
-        assigned_clusters[:] = new_assigned_clusters[:]
-        # _, distances = calculate_distances(data, new_centroids)
+        assigned_clusters[:] = new_assigned_clusters[:]       
 
     sse = get_quality(data, assigned_clusters, new_centroids, num_clusters)
     return new_centroids, loop_counter, sse, assigned_clusters

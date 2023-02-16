@@ -31,96 +31,41 @@ def calculate_distances(data, centroids):
         dist_mat[i, :] = np.sqrt(np.sum(np.square(data[i] - centroids), 1))
         # dist_mat[i, :] = np.sum(np.square(data[i] - centroids), 1)
 
-    return np.argmin(dist_mat, axis=1), np.round(np.min(dist_mat, axis=1), 5)
+    return np.argmin(dist_mat, axis=1), np.min(dist_mat, axis=1)
+
+
+def calculate_sse(data, centroids):
+
+    # Find pairwise distances
+    n, d = data.shape
+    dist_mat = np.zeros((n, len(centroids)), dtype=float)
+
+    for i in range(n):
+        dist_mat[i, :] = np.sum(np.square(data[i, :] - centroids), 1)
+
+    return dist_mat
 
 
 
-# def calculate_sse_specific(data, new_centroids, cluster_info, he_data_indices, assigned_clusters, 
-# curr_cluster, my_sse, distances):
-
-#     curr_cluster_info = cluster_info[curr_cluster]
+# def calculate_sse_specific(data, new_centroids, he_data_indices, cluster_info, assigned_clusters, 
+# curr_cluster):
 
 #     sse = distance.cdist(data[he_data_indices, :], new_centroids, 'sqeuclidean')
-#     sse_copy = np.zeros(shape=sse.shape)
-#     sse_copy[:] = sse[:]
 
-#     if curr_cluster_info > 1:
-#         sse[:, curr_cluster] = (curr_cluster_info * sse[:, curr_cluster])/(curr_cluster_info-1)
+#     my_size = cluster_info[curr_cluster]
+#     sse[:, curr_cluster] = (my_size * sse[:, curr_cluster])/(my_size-1)
 
-#     # if curr_cluster_info > 1:
-#     #     my_sse = (curr_cluster_info * my_sse)/(curr_cluster_info-1)
-#     my_sse = sse[:, curr_cluster]
-#     all_indices = []
-    
+
 #     for ot_cluster in range(len(new_centroids)):
                         
 #         if ot_cluster != curr_cluster:
             
-#             # print(curr_cluster, ot_cluster)
-#             size_ot_cluster = cluster_info[ot_cluster]
-#             sse[:, ot_cluster] = (size_ot_cluster * sse[:, ot_cluster])/(size_ot_cluster+1)
-#             ot_sse = sse[:, ot_cluster]
+#             ot_size = cluster_info[ot_cluster]
+#             sse[:, ot_cluster] = (ot_size * sse[:, ot_cluster])/(ot_size+1)
 
-#             temp_indices = np.where(ot_sse < my_sse)[0]
-            
-#             # Update the cluster membership for the data point
-#             if len(temp_indices) > 0:
-#                 # temp_indices2 = he_data_indices[temp_indices].tolist()
-#                 # assigned_clusters[temp_indices2] = ot_cluster
-
-#                 # distances[temp_indices2] = np.min(ot_sse[temp_indices,])
-#                 # distances[temp_indices2] = ot_sse[temp_indices]
-#                 all_indices += list(temp_indices)
     
-#     if len(all_indices) > 0 :
-#         all_indices = np.unique(all_indices)
-#         min_dist = np.min(sse_copy[all_indices, :], axis=1)
-#         new_clus = np.argmin(sse[all_indices, :], axis=1)
-#         temp = he_data_indices[all_indices].tolist()
-#         # print(temp)
-#         assigned_clusters[temp] = new_clus
-#         distances[temp] = min_dist
-
-#     return assigned_clusters, distances
-
-
-def calculate_sse_specific(data, new_centroids, he_data_indices, mysize, assigned_clusters, 
-curr_cluster, cluster_info):
-
-    sse = distance.cdist(data[he_data_indices, :], new_centroids, 'sqeuclidean')
-    sse_copy = np.zeros(shape=sse.shape)
-    sse_copy[:] = sse[:]
-
-    if mysize > 1:
-        sse[:, curr_cluster] = (mysize * sse[:, curr_cluster])/(mysize-1)
-
-    all_indices = []
-    
-    for ot_cluster in range(len(new_centroids)):
-                        
-        if ot_cluster != curr_cluster:
-            
-            # size_ot_cluster = len(np.where(assigned_clusters == ot_cluster)[0])
-            sse[:, ot_cluster] = (cluster_info[ot_cluster] * sse[:, ot_cluster])/(cluster_info[ot_cluster]+1)
-
-            temp_indices = np.where(sse[:, ot_cluster] < sse[:, curr_cluster])[0]
-            
-            # Update the cluster membership for the data point
-            if len(temp_indices) > 0:
-                all_indices += list(temp_indices)
-    
-
-    if len(all_indices) > 0 :
-        all_indices = np.unique(all_indices)
-        new_clus = np.argmin(sse[all_indices, :], axis=1)
-        temp = he_data_indices[all_indices].tolist()
-        assigned_clusters[temp] = new_clus
-
-        # print("\n")
-        # print("Actual Change: ", temp)
-        # print("Predicted: ", he_data_indices)
-
-    return assigned_clusters
+#     new_clus = np.argmin(sse, axis=1)
+#     return new_clus.tolist()
 
 
 def calculate_centroids(data, assigned_clusters):
@@ -225,16 +170,6 @@ def do_PCA(dataset, centroids1, centroids2, labels, title, file_name):
     plt.show()
     #plt.close()
 
-
-def sse_after_move(data, new_centroids, sse1, lowest_sse, index, curr_cluster, ot_cluster, size2):
-    
-    sse2 = (size2 * np.sum(np.square(data[index, :] - new_centroids[ot_cluster, :])))/(size2+1)
-    status = False
-
-    if sse2 < sse1:
-        status = True
-        print(index, curr_cluster, ot_cluster, sse1, sse2)
-    return status
 
 
 def get_quality(data, final_assign, final_centroids, num_clusters):

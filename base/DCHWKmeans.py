@@ -11,11 +11,10 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
 
     # Centroid status checker
     centroid_status = False
+    new_assigned_clusters = np.zeros(shape=(len(data)))
 
     # Calculate the cluster assignments for data points
     assigned_clusters, distances = calculate_distances(data, centroids)
-
-    new_assigned_clusters = np.zeros(shape=len(assigned_clusters))
     new_assigned_clusters[:]= assigned_clusters[:]
 
     # Re-calculate the centroids
@@ -30,16 +29,20 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
     while loop_counter<num_iterations:
 
         loop_counter += 1
-        print(loop_counter)
+        # print("Counter: ", loop_counter)
+        all_indices = []
 
         # Find inter-centroid ddist matrix
         dist_mat = distance.cdist(new_centroids, new_centroids, "euclidean")
         assign_dict, radius, cluster_info = get_membership(assigned_clusters, distances, num_clusters)
 
+        # if loop_counter >= 4:
+        #     print(dist_mat)
+        #     print(new_centroids, loop_counter)
+        #     for i in range(len(cluster_info)):
+        #         print(cluster_info[i], len(assign_dict[i]))
+
         for curr_cluster in range(num_clusters):
-            
-            # print(indices)
-            # print("Cluster: ", curr_cluster, cluster_info[curr_cluster])
 
             if check_centroid_status(curr_cluster, new_centroids, centroids):
                 
@@ -48,25 +51,23 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
                 if cluster_info[curr_cluster] > 1: 
 
                     indices = assign_dict[curr_cluster]
-
-                    # he_indices = find_he(data, new_centroids[curr_cluster], dist_mat, indices, 
-                    #     curr_cluster, num_clusters, cluster_info, assigned_clusters)
-
-                    new_clus, new_dist = find_he_new(data, new_centroids[curr_cluster], dist_mat, indices, 
+                    
+                    he_indices = find_he_new(data, new_centroids[curr_cluster], dist_mat, indices, 
                         curr_cluster, num_clusters, cluster_info)
                     
-                    new_assigned_clusters[indices] = new_clus
-                    distances[indices] = new_dist
-                    # assigned_clusters[:] = new_assigned_clusters[:]
-                    
-                    # if len(he_indices) > 0:
-                    #     assigned_clusters = calculate_sse_specific(data, new_centroids, he_indices, cluster_info[curr_cluster],
-                    #     assigned_clusters, curr_cluster, cluster_info)
+                    if he_indices != []:
+                        
+                        all_indices += list(he_indices)
+                        new_clus = calculate_sse_specific(data, new_centroids, he_indices, cluster_info,
+                        assigned_clusters, curr_cluster)
+
+                        assigned_clusters[he_indices] = new_clus
 
             else:
                 centroid_status = False
 
-        if len(np.unique(new_assigned_clusters)) < num_clusters:
+
+        if len(np.unique(assigned_clusters)) < num_clusters:
             print("DCHWKMeans: Found less modalities, safe exiting with current centroids.", loop_counter)
             return new_centroids, loop_counter, sys.float_info.max, assigned_clusters
 
@@ -74,10 +75,18 @@ def DCHWKmeans(data, num_clusters, num_iterations, seed):
             print("Convergence at iteration: ", loop_counter)
             break
 
+        # if len(all_indices) > 0:
+        #     temp = np.where(assigned_clusters != new_assigned_clusters)[0]
+        #     print("Size of changed: ", len(temp), " Predicted: ", len(all_indices))
+        #     print("Data that actually changed membership: ", temp)
+        #     print("Predicted: ", all_indices )
+        #     for i in temp:
+        #         print("Point: ", i, " Old center: ", assigned_clusters[i], "\t", "new center: ", new_assigned_clusters[i])
+
         # Re-calculate the centroids
         centroids[:] = new_centroids[:]
-        new_centroids = calculate_centroids(data, new_assigned_clusters)
-        assigned_clusters[:] = new_assigned_clusters[:]
+        new_centroids = calculate_centroids(data, assigned_clusters)
+        # assigned_clusters[:] = new_assigned_clusters[:]
 
 
     sse = get_quality(data, assigned_clusters, new_centroids, num_clusters)
