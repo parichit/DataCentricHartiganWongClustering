@@ -202,6 +202,97 @@ def find_neighbors(new_centroids, radius):
     return centroid_neighbor, dist_mat
 
 
+def find_neighbors_extended(new_centroids, radius, cluster_info):
+
+    centroid_neighbor = {}
+    dist_mat = distance.cdist(new_centroids, new_centroids, "euclidean")
+    dist_mat = np.divide(dist_mat, 2)
+    # print(dist_mat)
+
+    cutoff_coords = {}
+
+    for curr_cluster in range(len(new_centroids)):
+
+        cen1_rad = radius[curr_cluster]
+        neighbors = np.where(dist_mat[curr_cluster] < cen1_rad)[0]
+        centroid_neighbor[curr_cluster] = np.array(neighbors)
+
+        my_scale = 1
+
+        if cluster_info[curr_cluster] > 1:
+            my_scale = cluster_info[curr_cluster]/(cluster_info[curr_cluster]-1)
+        
+        center1 = new_centroids[curr_cluster]
+            
+        # loop over neighbors to find cutoff coordinates
+        for ot_cen in centroid_neighbor[curr_cluster]:
+
+            if curr_cluster != ot_cen:
+
+                # print("Centers: ", curr_cluster, "-", ot_cen)
+                center2 = new_centroids[ot_cen]
+                ot_scale = cluster_info[ot_cen]/(cluster_info[ot_cen]+1)
+
+                # Find coordinates of points to draw affine vectors
+                centroid_vec = np.subtract(center2, center1)
+                centroid_vec = centroid_vec / np.linalg.norm(centroid_vec)
+
+                if cluster_info[ot_cen] < cluster_info[curr_cluster]:
+                    scale_fac = ((cluster_info[ot_cen]/cluster_info[curr_cluster]))*100
+                else:
+                    scale_fac = ((cluster_info[curr_cluster]/cluster_info[ot_cen]))*100
+
+                if scale_fac >= dist_mat[curr_cluster, ot_cen]:
+                    
+                    if cluster_info[ot_cen] > cluster_info[curr_cluster]:
+                        scale_fac = (cluster_info[ot_cen]/cluster_info[curr_cluster]) + (my_scale/ot_scale)
+                    else:
+                        scale_fac = (cluster_info[curr_cluster]/cluster_info[ot_cen]) + (my_scale/ot_scale)
+
+                    scale_fac = dist_mat[curr_cluster, ot_cen] - scale_fac
+                    
+                mid_point = center1 + (scale_fac*centroid_vec)
+
+                # if curr_cluster == 0:
+                #     print(centroid_vec)
+                #     print(scale_fac)
+                #     print(mid_point)
+
+                if curr_cluster not in cutoff_coords.keys():
+                    cutoff_coords[curr_cluster] = {ot_cen: mid_point}
+                else:
+                    cutoff_coords[curr_cluster][ot_cen] = mid_point
+
+    # print(cutoff_coords)
+    # print(centroid_neighbor)
+    return centroid_neighbor, dist_mat, cutoff_coords
+
+
+
+def find_he_data(curr_cluster, centroids, neighbors, cutoff_points, indices, data):
+
+    test_data = data[indices]
+    he_points = []
+
+    # print(curr_cluster)
+    # print(neighbors)
+    # print(cutoff_points)
+
+    for ot_cluster in neighbors:
+         
+        if ot_cluster != curr_cluster:
+
+            point_sign = find_sign_by_product(cutoff_points[ot_cluster], centroids[ot_cluster], test_data)
+            same_sign = np.where(point_sign > 0)[0]
+            
+            if len(same_sign) > 0:
+                he_points += indices[same_sign].tolist()
+
+            # print("hello,", ot_cluster)
+
+    he_points = np.unique(he_points).tolist()
+    return he_points
+
 
 def find_all_he_points(dataset, centroids_neighbor, dist_mat, new_centroids, 
                              assign_dict, cluster_info):
@@ -289,6 +380,7 @@ def calculate_sse_specific(data, centroids, neighbors, cluster_info, curr_cluste
         center = neighbors[i]
 
         for i in range(n):
+            # dist_mat[i, :] = np.sqrt(np.sum(np.square(data[i, :] - centroids), 1))
             dist_mat[i, :] = np.sum(np.square(data[i, :] - centroids), 1)
         
         for i in range(len(centroids)):
@@ -354,14 +446,12 @@ def find_cluster_specific_he_points(dataset, neighbors, dist_mat, new_centroids,
                     scale_fac = (cluster_info[curr_cluster]/cluster_info[ot_cen]) + (my_scale/ot_scale)
                 
                 scale_fac = dist_mat[curr_cluster, ot_cen] - scale_fac
-                mid_point = center1 + (scale_fac*centroid_vec)
+                mid_point = np.add(center1, np.multiply(scale_fac, centroid_vec))
                 # mid_point = np.divide(np.add(center1, center2), 2)
 
-            else:
-                mid_point = np.add(center1, np.multiply(scale_fac, centroid_vec))
-            
+            # mid_point = np.divide(np.add(center1, center2), 2)
+            # mid_point = np.add(center1, np.multiply(scale_fac, centroid_vec))
             point_sign = find_sign_by_product(mid_point, center2, test_data)
-
             same_sign = np.where(point_sign > 0)[0]
 
             if len(same_sign) > 0:
@@ -406,24 +496,26 @@ def find_he_new(data, new_centroids, dist_mat, indices,
 curr_cluster, num_clusters, cluster_info):
 
     my_size = cluster_info[curr_cluster]
-    my_dists = np.sqrt(np.sum(np.square(data[indices, :] - new_centroids), 1))
+    # my_dists = np.sqrt(np.sum(np.square(data[indices, :] - new_centroids), 1))
+    my_dists = distance.cdist(data[indices], new_centroids)
 
-    ot_dists = np.zeros(shape=(my_size, num_clusters))
-
+    # ot_dists = np.zeros(shape=(my_size, num_clusters)
+    
     points = []
     he_index = []
     
-    ot_dists[:, curr_cluster] = my_dists[:]
+    ratio = (my_size/(my_size-1))
+    s = my_dists[:, curr_cluster]
+    my_dists[:, curr_cluster] *= ratio
 
     for ot_cluster in range(num_clusters):
 
         if ot_cluster != curr_cluster:
             
-            ot_size = cluster_info[ot_cluster]
-            ratio = (my_size/(my_size-1))/(ot_size/(ot_size+1))
-            min_l = np.abs(ot_dists[:, curr_cluster] - dist_mat[curr_cluster, ot_cluster])
+            ot_size = cluster_info[ot_cluster]/(cluster_info[ot_cluster]+1)
+            min_l = np.abs(s - dist_mat[curr_cluster, ot_cluster])
 
-            temp = np.where(min_l+0.1 < my_dists*ratio)[0]
+            temp = np.where(min_l*ot_size < my_dists[:, curr_cluster])[0]
             if len(temp) > 0:
                 he_index += temp.tolist()
 
@@ -436,7 +528,6 @@ curr_cluster, num_clusters, cluster_info):
     if len(he_index) > 0:
         he_index = np.unique(he_index)
         points = indices[he_index]
-
 
     return points 
 

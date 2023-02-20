@@ -93,7 +93,7 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
     new_assigned_clusters[:] = assigned_clusters[:]
 
     # Re-calculate the centroids
-    new_centroids = calculate_centroids(data, assigned_clusters)
+    new_centroids = calculate_centroids(data, centroids, assigned_clusters, num_clusters)
     
     for i in range(num_clusters):
         if len(np.where(assigned_clusters == i)[0]) == 0:
@@ -140,6 +140,11 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
                 if cluster_info[curr_cluster] > 1:  
                     
                     indices = assign_dict[curr_cluster]
+
+                    # all_indices += list(find_he_new(data, new_centroids, dist_mat, indices, 
+                    #                             curr_cluster, num_clusters, cluster_info))
+                    
+
                     sse = calculate_sse(data[indices, :], new_centroids)
 
                     my_size = cluster_info[curr_cluster]/(cluster_info[curr_cluster]-1)
@@ -155,7 +160,7 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
                             sse[:, ot_cluster] = sse[:, ot_cluster] * ot_size
 
                     new_assigned_clusters[indices] = np.argmin(sse, axis=1)
-                    distances[indices] = np.sqrt(np.min(sse, axis=1))
+                    distances[indices] = np.min(sse, axis=1)
 
             else:
                 centroid_status = False
@@ -164,20 +169,20 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
         # print("Counter:", loop_counter)
         # print("Num change: ", len(t), "Data Changed: ", t)
         # print("Old: ", assigned_clusters[t], "New: ", new_assigned_clusters[t])
-        # if len(all_indices) > 0:
-        #     temp = np.where(assigned_clusters != new_assigned_clusters)[0] 
-        #     all_indices = list(np.unique(all_indices))
+        if len(all_indices) > 0:
+            temp = np.where(assigned_clusters != new_assigned_clusters)[0] 
+            all_indices = list(np.unique(all_indices))
             # print("Loop Counter: ", loop_counter)
             # print("\nSize of changed: ", len(temp), " Predicted: ", len(all_indices))
             # print("Data that actually changed it's membership: ", temp)
             # print("Predicted:", all_indices)
             
-            # for i in temp:
-            #     if i not in all_indices:
-            #         print("#############################")
-            #         print("Loop Counter: ", loop_counter)
-            #         print(i, " not found in Prediction")
-            #         print("#############################")
+            for i in temp:
+                if i not in all_indices:
+                    print("#############################")
+                    print("Loop Counter: ", loop_counter)
+                    print(i, " not found in Prediction")
+                    print("#############################")
             
             #         new_clus =  int(new_assigned_clusters[i])
             #         old_clus =  assigned_clusters[i]
@@ -196,7 +201,7 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
             #         print("Old Size: ", cluster_info[old_clus], " New Size: ", cluster_info[new_clus])
             #         centroid_status = False
             #         # vis_data_with_he(data, new_centroids, neighbors, assigned_clusters, radius, loop_counter, [i], [])
-                    # break
+                    break
 
             # for i in temp:
             #     print("Point: ", i, " Old center: ", assigned_clusters[i], "\t", "new center: ", new_assigned_clusters[i])
@@ -213,7 +218,7 @@ def HWKmeans(data, num_clusters, num_iterations, seed):
         
         # Re-calculate the centroids
         centroids[:] = new_centroids[:]
-        new_centroids = calculate_centroids(data, new_assigned_clusters)
+        new_centroids = calculate_centroids(data, new_centroids, new_assigned_clusters, num_clusters)
         assigned_clusters[:] = new_assigned_clusters[:]       
 
     sse = get_quality(data, assigned_clusters, new_centroids, num_clusters)

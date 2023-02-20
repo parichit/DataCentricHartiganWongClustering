@@ -43,9 +43,13 @@ int main(){
     // vector<string> out_list = {"fourclassCentroids", "codrnaCentroids", "BreastcancerCentroids",
     // "cropCentroids", "CensusCentroids"};
 
-    vector<string> file_list = {"50_2_10.csv"};
-    vector<string> out_list = {"50_2_10"};
-    int num_clusters = 5;
+    // vector<string> file_list = {"50_2_10.csv"};
+    // vector<string> out_list = {"50_2_10"};
+
+    vector<string> file_list = {"magic.csv"};
+    vector<string> out_list = {"magic"};
+
+    int num_clusters = 10;
 
     somefilePath = basePath + file_list[0];
 
@@ -53,7 +57,8 @@ int main(){
     
     // Read in the data
     auto t1 = std::chrono::high_resolution_clock::now();
-    std::pair<int, int> p = readSimulatedData(somefilePath, dataset, labels, true, true);
+    // std::pair<int, int> p = readSimulatedData(somefilePath, dataset, labels, true, true);
+    std::pair<int, int> p = readSimulatedData(somefilePath, dataset, labels, false, false);
     auto t2 = std::chrono::high_resolution_clock::now();
     auto file_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
     
@@ -74,17 +79,14 @@ int main(){
     // read_kplus_plus_centroids(centroidFilePath, centroids, num_clusters);
 
     // Debug - Testing
-    // cout << "\nAlgo: HWKMeans," << " Clusters: " << num_clusters << ", Threshold: " << threshold << endl;
-    // auto t3 = std::chrono::high_resolution_clock::now();
-    // res = hw_kmeans(dataset, num_clusters, threshold, num_iterations, numCols, 60000);
-    // auto t4 = std::chrono::high_resolution_clock::now();
-    // auto km_int = std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3);
-    // std::cout << "Total HWKMeans time: " << km_int.count() << " milliseconds\n";
+    cout << "\nAlgo: HWKMeans," << " Clusters: " << num_clusters << ", Threshold: " << threshold << endl;
+    auto t3 = std::chrono::high_resolution_clock::now();
+    res = hw_kmeans(dataset, num_clusters, threshold, num_iterations, numCols, 60000);
+    auto t4 = std::chrono::high_resolution_clock::now();
+    auto km_int = std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3);
+    std::cout << "Total HWKMeans time: " << km_int.count() << " milliseconds\n";
 
     // print_2d_vector(res.centroids, res.centroids.size(), "Out");
-
-    // // vector<vector<float> > rcentroids(num_clusters, vector<float>(numCols, 0.0));
-    // // read_kplus_plus_centroids(centroidFilePath, rcentroids, num_clusters);
 
     cout << "\nAlgo: DCHW_Kmeans," << " Clusters: " << num_clusters << ", Threshold: " << threshold << endl;
     auto t5 = std::chrono::high_resolution_clock::now();

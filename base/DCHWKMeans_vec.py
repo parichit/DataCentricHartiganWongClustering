@@ -18,7 +18,7 @@ def DCHWKmeans_vec(dataset, num_clusters, num_iterations, seed):
     new_assigned_clusters[:]= assigned_clusters[:]
 
     # Re-calculate the centroids
-    new_centroids = calculate_centroids(dataset, assigned_clusters)
+    new_centroids = calculate_centroids(dataset, centroids, assigned_clusters, num_clusters)
 
     for i in range(num_clusters):
         if len(np.where(assigned_clusters == i)[0]) == 0:
@@ -30,33 +30,51 @@ def DCHWKmeans_vec(dataset, num_clusters, num_iterations, seed):
 
         loop_counter += 1
         # print("Counter: ", loop_counter)
-        # all_indices = []
+        all_indices = []
 
         # Get current clustering state
         assign_dict, radius, cluster_info = get_membership(assigned_clusters, distances, num_clusters)
-        neighbors, dist_mat = find_neighbors(new_centroids, radius)
+        # neighbors, dist_mat = find_neighbors(new_centroids, radius)
+        # print(radius)
+
+        neighbors, dist_mat, cutoff_points = find_neighbors_extended(new_centroids, radius, cluster_info)
+        
+        # print(new_centroids)
+        # print(cluster_info)
+        # print(radius)
+        # for i in cutoff_points.keys():
+        #     print(i, cutoff_points[i])
+        
         # neighbors, he_indices = find_all_he_indices_neighbor(dataset, new_centroids, radius, 
         #                                                                  assign_dict, cluster_info)
         # for k in he_indices.keys():
         #     all_indices += he_indices[k]
 
         # print("Counter", loop_counter)
+        # print(neighbors)
+        # print(radius, cluster_info)
         # print("Num of HE:", len(all_indices), "Cluster Size: ", cluster_info)
 
         for center in neighbors.keys():
 
-            all_indices = []
+            # all_indices = []
 
             if check_centroid_status(center, new_centroids, centroids):
 
                 centroid_status = True
 
-                if cluster_info[center] > 1:
+                if cluster_info[center] > 1 and len(neighbors[center]) > 1:
 
-                    he_points = find_cluster_specific_he_points(dataset, neighbors, dist_mat, new_centroids, 
-                             assign_dict, cluster_info, center)
+                    # he_points = find_cluster_specific_he_points(dataset, neighbors, dist_mat, new_centroids, 
+                    #          assign_dict, cluster_info, center)
+
+                    # print(center)
+                    # print(neighbors[center])
+                    # print(cutoff_points[center])
+                    # print(assign_dict[center])
                     
-                    # he_points = list(he_indices[center])
+                    he_points = find_he_data(center, new_centroids, neighbors[center], cutoff_points[center], assign_dict[center], dataset)
+                    
                     if len(he_points) > 0:
                         all_indices += he_points
 
@@ -75,8 +93,12 @@ def DCHWKmeans_vec(dataset, num_clusters, num_iterations, seed):
             else:
                 centroid_status = False
 
-        # t  = np.where(assigned_clusters != new_assigned_clusters)[0]
+        # t = np.where(assigned_clusters != new_assigned_clusters)[0]
         # print("Changed: ", len(t), "Size HE: ", len(all_indices))
+        # print(all_indices)
+        # for i in t:
+        #     print("Point: ", i, "Old clus: ", assigned_clusters[i], "new Clus: ", new_assigned_clusters[i])
+        
         # print("Old: ", assigned_clusters[t], "New: ", new_assigned_clusters[t])
         if len(np.unique(new_assigned_clusters)) < num_clusters:
             print("DCHWKMeans: Found less modalities, safe exiting with current centroids.", loop_counter)
@@ -96,7 +118,7 @@ def DCHWKmeans_vec(dataset, num_clusters, num_iterations, seed):
 
         # Re-calculate the centroids
         centroids[:] = new_centroids[:]
-        new_centroids = calculate_centroids(dataset, new_assigned_clusters)
+        new_centroids = calculate_centroids(dataset, new_centroids, new_assigned_clusters, num_clusters)
         assigned_clusters[:] = new_assigned_clusters[:]
 
 

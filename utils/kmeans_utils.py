@@ -41,7 +41,8 @@ def calculate_sse(data, centroids):
     dist_mat = np.zeros((n, len(centroids)), dtype=float)
 
     for i in range(n):
-        dist_mat[i, :] = np.sum(np.square(data[i, :] - centroids), 1)
+        # dist_mat[i, :] = np.sqrt(np.sum(np.square(data[i, :] - centroids), 1))
+        dist_mat[i, :] = np.sum(np.square(data[i] - centroids), 1)
 
     return dist_mat
 
@@ -68,11 +69,20 @@ def calculate_sse(data, centroids):
 #     return new_clus.tolist()
 
 
-def calculate_centroids(data, assigned_clusters):
+def calculate_centroids(data, centroids, assigned_clusters, num_clusters):
 
     temp = [np.mean(data[np.where(assigned_clusters == i),], axis=1)[0] for i in np.sort(np.unique(assigned_clusters))]
     new_centroids = np.array(temp)
+    # temp = []
 
+    # for i in range(num_clusters):
+        
+    #     if len(np.where(assigned_clusters == i)[0]) > 1:
+    #         temp.append(np.mean(data[np.where(assigned_clusters == i),], axis=1)[0])
+    #     else:
+    #         temp.append(centroids[i].tolist())
+
+    # new_centroids = np.array(temp)
     return np.round(new_centroids, 5)
 
 

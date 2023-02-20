@@ -67,31 +67,32 @@ float threshold, int num_iterations, int numCols, int time_limit){
     update_centroids(dataset, new_centroids, assigned_clusters, 
     cluster_info, numCols);
 
-    print_2d_vector(centroids, centroids.size(), "Initial");
+    // print_2d_vector(centroids, centroids.size(), "Initial");
 
 
     while (loop_counter < num_iterations){
 
-        loop_counter++;
-
          // Check Convergence
         if (check_status(centroids, new_centroids)){
+
+            loop_counter++;
             
             centroid_status =  true;
 
-            cout << loop_counter << endl;
-            print_2d_vector(new_centroids, new_centroids.size(), "Inside loop");
+            // cout << loop_counter << endl;
+            // print_2d_vector(new_centroids, new_centroids.size(), "Inside loop");
 
             for (int i =0 ; i< dataset.size(); i++){
                 curr_cluster = assigned_clusters[i];
-                reassign_point(dataset[i], i, dist_matrix, new_centroids, assigned_clusters, curr_cluster, 
-                cluster_info, an1, an2, dist_counter);
+                if (cluster_info[curr_cluster][0] > 1){
+                    reassign_point(dataset[i], i, dist_matrix, new_centroids, assigned_clusters, curr_cluster, 
+                    cluster_info, an1, an2, dist_counter);
                 }
+            }
             
             for (int i = 0; i < num_clusters; i++){
                 if (cluster_info[i][0] > 1)
                     an1[i] = cluster_info[i][0]/(cluster_info[i][0]-1);
-                
                 an2[i] = cluster_info[i][0]/(cluster_info[i][0]+1);
                 }
             
@@ -102,7 +103,7 @@ float threshold, int num_iterations, int numCols, int time_limit){
             }
             
         if (centroid_status == false){
-            cout << "Convergence at iteration: " <<  loop_counter << endl;
+            cout << "HW convergence at iteration: " <<  loop_counter << endl;
             break;
         }
 

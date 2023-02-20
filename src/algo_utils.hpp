@@ -96,8 +96,7 @@ vector<vector <T1> > &dataset, T2 num_cluster){
 }
 
 
-inline float calc_sq_dist(const vector<float> &point, 
-const vector<float> &center, long long int &dist_counter){
+inline float calc_sq_dist(const vector<float> &point, const vector<float> &center){
     
     float dist = 0.0;
     float temp = 0.0;
@@ -107,7 +106,21 @@ const vector<float> &center, long long int &dist_counter){
         dist = dist + (temp*temp);
     }
 
-    dist_counter += 1;
+    return dist;
+}
+
+
+inline float calc_euclidean(const vector<float> &point, const vector<float> &center){
+    
+    float dist = 0.0;
+    float temp = 0.0;
+    
+    for (int i=0; i < point.size(); i++){
+        temp = point[i] - center[i];
+        dist = dist + (temp*temp);
+    }
+
+    dist = sqrt(dist);
     return dist;
 }
 
@@ -125,12 +138,12 @@ long long int &dist_counter)
     // Calculate the distance of points to nearest center
     for (i=0; i < dataset.size(); i++){
   
-        temp1 = calc_sq_dist(dataset[i], centroids[0], dist_counter);
+        // temp1 = calc_euclidean(dataset[i], centroids[0]);
         shortestDist1 = std::numeric_limits<float>::max();
 
         for (j=0; j < centroids.size(); j++){ 
             
-            temp1 = calc_sq_dist(dataset[i], centroids[j], dist_counter);
+            temp1 = calc_euclidean(dataset[i], centroids[j]);
             
             if (temp1 < shortestDist1){
                 shortestDist1 = temp1;
@@ -169,7 +182,7 @@ vector<vector<float> > &cluster_info, long long int &dist_counter)
   
         for (j=0; j < centroids.size(); j++){ 
             
-            temp1 = calc_sq_dist(dataset[i], centroids[j], dist_counter);
+            temp1 = calc_sq_dist(dataset[i], centroids[j]);
             
             if (temp1 < shortestDist1){
                 shortestDist1 = temp1;
@@ -208,16 +221,13 @@ vector<vector<float> > &cluster_info, int numCols){
     for(index=0; index<new_centroids.size();index++){
         
         k = cluster_info[index][0];
-
-        if (k > 1){
-            for (j = 0; j < new_centroids[index].size(); j++){
-                new_centroids[index][j] = new_centroids[index][j]/k;
-                }
-            }
-        
-        else if (k < 1){
-                new_centroids[index][j] = std::numeric_limits<float>::max();
+        for (j = 0; j < new_centroids[index].size(); j++){
+            new_centroids[index][j] = new_centroids[index][j]/k;
         }
+
+        // else if (k < 1){
+        //         new_centroids[index][j] = std::numeric_limits<float>::max();
+        // }
 
     }
 

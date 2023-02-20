@@ -9,99 +9,141 @@
 using namespace std;
 
 
+inline bool find_context_direction(const vector<float> &actual_point, 
+const vector<float> &centroid_vector, const vector<float> &midpoint, 
+float &vec_sum){
 
-inline void get_he_data(vector<vector<float> > &dataset, vector<float> &dist_mat, vector<float> &centroid,
-vector<float> &an1, int clus, vector<int> &assigned_clusters, int &num_clusters, 
-vector<vector <float> > &cluster_info, vector<vector<float> > &he_data, long long &dist_counter){
-
-    int curr_cluster = 0, i = 0;
-    vector<float> temp1(2, 0);
-    float temp = 0;
-
-    he_data.clear();
-
-    // Find HE data
-    for (i = 0 ; i < dist_mat.size(); i++){
-        
-        curr_cluster = assigned_clusters[i];
-        
-        if (curr_cluster == clus){
-
-            temp = calc_sq_dist(dataset[i], centroid, dist_counter);
-        
-            if(temp > cluster_info[curr_cluster][1]/2){
-                temp1[0] = i;
-                temp1[1] = temp;
-                he_data.push_back(temp1);
-
-            }
-        }
+    vec_sum = 0.0;
     
+    for (int i=0; i<midpoint.size(); i++){
+        vec_sum = vec_sum + ((actual_point[i] - midpoint[i]) * centroid_vector[i]);
     }
 
+    if (vec_sum>0)
+        return true;
+
+    return false;
 }
 
 
-inline void reassign_he_data(vector<vector<float> > &dataset, vector<vector<float> > &new_centroids, 
-                        vector<vector<float> > &cluster_info, vector<vector<float> > &he_data, 
-                        vector<int> &assigned_clusters, int curr_cluster, vector<float> &dist_matrix,
-                        vector<float> &an1, vector<float> &an2, long long int &dist_counter){
 
-    int i =0, j =0, ot_cluster = 0, point  = 0, new_center = 0;
-    float temp = 0, temp1 = 0, my_sse = 0, 
-    shortest_sse = std::numeric_limits<float>::max(), shortest_dist = 0;
+inline void find_cutoff_points(vector<float> &curr_cluster, vector<float> &ot_center, 
+vector<vector<vector <float> > > &cutoff_points, vector<vector<vector <float> > > &affine_vectors, 
+vector<vector<float> > &cluster_info, float &neighbor_dist,
+ int &curr_center_index, int &ot_center_index, vector<float> &an1, vector<float> &an2){
 
-    if (cluster_info[curr_cluster][0] > 1){
+    vector<float> direc_vec(curr_cluster.size(), 0);
+    int i = 0;
+    float acc_sum = 0, scale_fac = 0;
+    bool flag = false;
 
-        for(i=0; i<he_data.size(); i++){
-            he_data[i][1] *= an1[curr_cluster];
+    // 1. Find direction vector
+    for (i = 0 ; i < curr_cluster.size(); i++){
+        direc_vec[i] = ot_center[i] - curr_cluster[i];
+        acc_sum += direc_vec[i]*direc_vec[i];
+    }
+
+    // 2. Calculate the unit vector
+    acc_sum = sqrt(acc_sum);
+    for (i = 0 ; i < curr_cluster.size(); i++)
+        direc_vec[i] = direc_vec[i]/acc_sum ;
+
+
+    // 3. Get the scale factor
+    if (cluster_info[ot_center_index][0] < cluster_info[curr_center_index][0]){
+        scale_fac = (cluster_info[ot_center_index][0]/cluster_info[curr_center_index][0])*100 ;
+    }
+    else{
+        scale_fac = (cluster_info[curr_center_index][0]/cluster_info[ot_center_index][0])*100 ;
+        flag = true;
+    }
+
+    if (scale_fac >= neighbor_dist){
+        
+        if (flag == true){
+            scale_fac = (cluster_info[ot_center_index][0]/cluster_info[curr_center_index][0]) + (an1[curr_center_index]/an2[ot_center_index]);
         }
+        else{
+            scale_fac = (cluster_info[curr_center_index][0]/cluster_info[ot_center_index][0]) + (an1[curr_center_index]/an2[ot_center_index]);   
+        }
+        scale_fac = neighbor_dist - scale_fac;
     }
     
+    // 4. Scale the unit vector and get the cut-off coordinates
+    for (i = 0 ; i < curr_cluster.size(); i++){
+        cutoff_points[curr_center_index][ot_center_index][i] = curr_cluster[i] + (scale_fac * direc_vec[i]);
+        affine_vectors[curr_center_index][ot_center_index][i] = ot_center[i] - (cutoff_points[curr_center_index][ot_center_index][i]);
+    }
 
-    for (i = 0 ; i < he_data.size();  i++){
+    // if (curr_center_index ==0){
+    //     print_vector(direc_vec, direc_vec.size(), "Direc vector");
+    //     cout << scale_fac << endl;
+    //     print_2d_vector(cutoff_points[curr_center_index], cutoff_points[curr_center_index].size(), "Cutoff");
+    // }
+}
 
-        point = he_data[i][0];
-        my_sse = he_data[i][1];
+
+inline void find_neighbors(vector<vector <float> > &centroids, 
+vector<vector <float> > &center_dist_mat, vector<vector <float> > &cluster_info, 
+vector<vector<int> > &neighbors, vector<vector<vector <float> > > &cutoff_points, 
+vector<vector<vector <float> > > &affine_vectors, vector<float> &an1, vector<float> &an2){
+
+    float dist = 0;
+    float radius = 0;
+    
+    // Clear previous allocations
+    // reinit(neighbors);
+    vector<int> temp;
+
+    int curr_center = 0, ot_center = 0, cnt = 0;
+
+    // Calculate inter-centroid distances
+    for(curr_center=0; curr_center<centroids.size(); curr_center++){
         
-        for(ot_cluster = 0; ot_cluster < new_centroids.size(); ot_cluster++){
-
-            if (curr_cluster != ot_cluster){
-
-                // Calculate SSE
-                temp = calc_sq_dist(dataset[point], new_centroids[ot_cluster], dist_counter);
-                // temp1 = temp * (cluster_info[ot_cluster][0]/(cluster_info[ot_cluster][0]+1));
-                temp1 = temp * an2[ot_cluster];
-
-                if (temp1 < shortest_sse){
-
-                    shortest_sse = temp1;
-                    shortest_dist = temp;
-                    new_center = ot_cluster;
-
-                    // dist_matrix[point] = temp;
-                    // assigned_clusters[point] = ot_cluster;
-
-                    // cluster_info[curr_cluster][0] -= 1;
-                    // cluster_info[ot_cluster][0] += 1;
-
-                }
-
+        radius = cluster_info[curr_center][1];
+        cnt = 0;
+        
+        for(ot_center=0; ot_center<centroids.size(); 
+        ot_center++){    
+            
+            // Do only k calculations, save so many :)
+            if (curr_center < ot_center){
+                dist = calc_euclidean(centroids[curr_center], centroids[ot_center]);
+                center_dist_mat[curr_center][ot_center] = dist/2;
+                center_dist_mat[ot_center][curr_center] = center_dist_mat[curr_center][ot_center];
             }
 
+            // Start neighbor finding
+            if ((curr_center != ot_center) && 
+            (center_dist_mat[curr_center][ot_center] < radius)){
+
+                // Create an object of neighbor holder structure
+                // and populate the fields inside it.
+                // temp[0] = center_dist_mat[curr_center][ot_center];
+                // temp[1] = ot_center;
+                // temp[2] = cnt;
+                // temp_master.push_back(temp);
+                temp.push_back(ot_center);
+                // neighbors[curr_center].push_back(ot_center);
+           
+                // Get the cut-off coordinates and affine vector for this pair of centroids
+                find_cutoff_points(centroids[curr_center], centroids[ot_center], cutoff_points, affine_vectors, 
+                cluster_info, center_dist_mat[curr_center][ot_center], curr_center, ot_center, an1, an2);
+                cnt++;
+            }
         }
-
-        if (shortest_sse < my_sse){
-            assigned_clusters[point] = new_center;
-            dist_matrix[point] = shortest_dist;
-            cluster_info[curr_cluster][0] = cluster_info[curr_cluster][0] - 1;
-            cluster_info[new_center][0] = cluster_info[curr_cluster][0] + 1;
+        
+        if (cnt > 0){
+            neighbors[curr_center] = temp;
         }
-
+        
+        cluster_info[curr_center][2] = cnt;   
+        
+        temp.clear();
     }
+}
 
 
-    }
 
 
 inline void update_cluster_info(vector<int> &assigned_clusters, 
@@ -130,4 +172,3 @@ vector<float> &an1, vector<float> &an2, int num_clusters){
     }
 
 }
-
