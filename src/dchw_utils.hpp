@@ -30,12 +30,14 @@ float &vec_sum){
 inline void find_cutoff_points(vector<float> &curr_cluster, vector<float> &ot_center, 
 vector<vector<vector <float> > > &cutoff_points, vector<vector<vector <float> > > &affine_vectors, 
 vector<vector<float> > &cluster_info, float &neighbor_dist,
- int &curr_center_index, int &ot_center_index, vector<float> &an1, vector<float> &an2){
+ int &curr_center_index, int &ot_center_index, vector<float> &an1, vector<float> &an2, 
+ float &scale_fac){
 
     vector<float> direc_vec(curr_cluster.size(), 0);
     int i = 0;
-    float acc_sum = 0, scale_fac = 0;
+    float acc_sum = 0;
     bool flag = false;
+    scale_fac = 0;
 
     // 1. Find direction vector
     for (i = 0 ; i < curr_cluster.size(); i++){
@@ -71,6 +73,7 @@ vector<vector<float> > &cluster_info, float &neighbor_dist,
     
     // 4. Scale the unit vector and get the cut-off coordinates
     for (i = 0 ; i < curr_cluster.size(); i++){
+        // cutoff_points[curr_center_index][ot_center_index][i] = (curr_cluster[i] + ot_center[i])/2;
         cutoff_points[curr_center_index][ot_center_index][i] = curr_cluster[i] + (scale_fac * direc_vec[i]);
         affine_vectors[curr_center_index][ot_center_index][i] = ot_center[i] - (cutoff_points[curr_center_index][ot_center_index][i]);
     }
@@ -86,16 +89,18 @@ vector<vector<float> > &cluster_info, float &neighbor_dist,
 inline void find_neighbors(vector<vector <float> > &centroids, 
 vector<vector <float> > &center_dist_mat, vector<vector <float> > &cluster_info, 
 vector<vector<int> > &neighbors, vector<vector<vector <float> > > &cutoff_points, 
-vector<vector<vector <float> > > &affine_vectors, vector<float> &an1, vector<float> &an2){
+vector<vector<vector <float> > > &affine_vectors, vector<float> &an1, vector<float> &an2,
+vector<float> &cluster_safe){
 
     float dist = 0;
-    float radius = 0;
+    float radius = 0, scale_fac = 0;
     
     // Clear previous allocations
     // reinit(neighbors);
     vector<int> temp;
 
     int curr_center = 0, ot_center = 0, cnt = 0;
+    float limit = 0;
 
     // Calculate inter-centroid distances
     for(curr_center=0; curr_center<centroids.size(); curr_center++){
@@ -104,18 +109,20 @@ vector<vector<vector <float> > > &affine_vectors, vector<float> &an1, vector<flo
         cnt = 0;
         
         for(ot_center=0; ot_center<centroids.size(); 
-        ot_center++){    
+        ot_center++){ 
+
+            limit = std::numeric_limits<float>::max();   
             
             // Do only k calculations, save so many :)
             if (curr_center < ot_center){
                 dist = calc_euclidean(centroids[curr_center], centroids[ot_center]);
-                center_dist_mat[curr_center][ot_center] = dist/2;
+                center_dist_mat[curr_center][ot_center] = dist;
                 center_dist_mat[ot_center][curr_center] = center_dist_mat[curr_center][ot_center];
             }
 
             // Start neighbor finding
             if ((curr_center != ot_center) && 
-            (center_dist_mat[curr_center][ot_center] < radius)){
+            (center_dist_mat[curr_center][ot_center]/2 < radius)){
 
                 // Create an object of neighbor holder structure
                 // and populate the fields inside it.
@@ -127,9 +134,15 @@ vector<vector<vector <float> > > &affine_vectors, vector<float> &an1, vector<flo
                 // neighbors[curr_center].push_back(ot_center);
            
                 // Get the cut-off coordinates and affine vector for this pair of centroids
-                find_cutoff_points(centroids[curr_center], centroids[ot_center], cutoff_points, affine_vectors, 
-                cluster_info, center_dist_mat[curr_center][ot_center], curr_center, ot_center, an1, an2);
+                // find_cutoff_points(centroids[curr_center], centroids[ot_center], cutoff_points, affine_vectors, 
+                // cluster_info, center_dist_mat[curr_center][ot_center], curr_center, ot_center, an1, an2, scale_fac);
                 cnt++;
+
+                // if(scale_fac < limit){
+                //     limit = scale_fac;
+                //     cluster_safe[curr_center] = scale_fac;
+                // }
+
             }
         }
         

@@ -22,7 +22,7 @@ float threshold, int num_iterations, int numCols, int time_limit){
     vector<vector<vector <float> > > affine_vectors(num_clusters, vector<vector<float> >(num_clusters, vector<float>(numCols, 0)));
     
     vector<vector<float> > cluster_info(num_clusters, vector<float>(3, 0)); 
-    vector<float> cluster_radius(num_clusters, 0.0);
+    vector<float> cluster_safe(num_clusters, 0.0);
     vector<float> an1(num_clusters);  
     vector<float> an2(num_clusters);  
 
@@ -30,13 +30,14 @@ float threshold, int num_iterations, int numCols, int time_limit){
     vector<vector<float> > he_data;
 
     int loop_counter = 0, i = 0, j = 0, my_cluster = 0, new_clus = 0;
-    float ot_dist = 0, ot_dist_w = 0, my_dist = 0, my_dist_w = 0, shor_dist = 0;
+    float ot_dist = 0, ot_dist_w = 0, my_dist = 0, my_dist_w = 0, shor_dist = 0, temp = 0;
     long long int dist_counter = 0;
 
     output_data result;
     bool centroid_status = false;
 
     float neighbor_time = 0, inner_loop_time = 0;
+    float lim = std::numeric_limits<float>::max();
 
     // Start time counter 
     // auto start = std::chrono::high_resolution_clock::now();
@@ -93,10 +94,11 @@ float threshold, int num_iterations, int numCols, int time_limit){
             // Set current centroid status
             centroid_status = true;
             
-            // auto t1 = std::chrono::high_resolution_clock::now();
+            
             // Find neighbors
+            // auto t1 = std::chrono::high_resolution_clock::now();
             find_neighbors(new_centroids, center_dist_mat, cluster_info, neighbors, 
-            cutoff_points, affine_vectors, an1, an2);
+            cutoff_points, affine_vectors, an1, an2, cluster_safe);
             // auto t2 = std::chrono::high_resolution_clock::now();
             // auto temp = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
             // neighbor_time += temp;
@@ -104,6 +106,7 @@ float threshold, int num_iterations, int numCols, int time_limit){
             // print_2d_vector(new_centroids, new_centroids.size(), "Initial");
             // print_2d_vector(cluster_info, cluster_info.size(), "cluster_info");
             // print_2d_vector(neighbors, neighbors.size(), "neighbors");
+            // print_vector(cluster_safe, cluster_safe.size(), "cluster_safe");
             // print_2d_vector(cutoff_points[0], cutoff_points[0].size(), "cutoff_points");
 
             // auto t3 = std::chrono::high_resolution_clock::now();
@@ -111,14 +114,19 @@ float threshold, int num_iterations, int numCols, int time_limit){
 
                 my_cluster = assigned_clusters[i];
 
+                // my_dist = calc_sq_dist(dataset[i], new_centroids[my_cluster]);
+                // if (sqrt(my_dist) < cluster_safe[my_cluster]){
+                //     continue;
+                // }
+
                 // Loop through the neighbors (if they exist)
-                if ((cluster_info[my_cluster][0] == 1) || (cluster_info[my_cluster][2] == 0)){
-                        continue;
-                    }
+                if ((cluster_info[my_cluster][0] > 1) && (cluster_info[my_cluster][2] > 0)){
+                        // continue;
 
                     my_dist = calc_sq_dist(dataset[i], new_centroids[my_cluster]);
                     my_dist_w = my_dist * an1[my_cluster]; 
-                    shortest_sse = std::numeric_limits<float>::max();
+                    shortest_sse = lim;
+                    temp = sqrt(my_dist);
 
                     if(my_dist > cluster_info[my_cluster][1])
                         cluster_info[my_cluster][1] = my_dist;
@@ -127,26 +135,32 @@ float threshold, int num_iterations, int numCols, int time_limit){
                     for (j=0; j<neighbors[my_cluster].size(); j++){ 
 
                         // Perform computations only if HE point
-                        if (find_context_direction(dataset[i], affine_vectors[my_cluster][neighbors[my_cluster][j]], 
-                        cutoff_points[my_cluster][neighbors[my_cluster][j]], ot_dist)){
-
-                            ot_dist = calc_sq_dist(dataset[i], new_centroids[neighbors[my_cluster][j]]);
-                            // shor_dist = sqrt(ot_dist);
-                            ot_dist_w = ot_dist * an2[neighbors[my_cluster][j]];
-
-                            if(ot_dist > cluster_info[neighbors[my_cluster][j]][1])
-                                cluster_info[neighbors[my_cluster][j]][1] = ot_dist;
-
-
-                            if(ot_dist_w < shortest_sse){
-                                shortest_sse = ot_dist_w;
-                                new_clus = neighbors[my_cluster][j];
-                                // cout << "Point: " << i << " Old: " << my_cluster << " New: " << new_clus << endl;
-                            } 
-
+                        // if (find_context_direction(dataset[i], affine_vectors[my_cluster][neighbors[my_cluster][j]], 
+                        // cutoff_points[my_cluster][neighbors[my_cluster][j]], ot_dist)){
+                        if ( ( an2[neighbors[my_cluster][j]] * abs(temp - center_dist_mat[my_cluster][neighbors[my_cluster][j]])) 
+                        > (an1[my_cluster] * temp) ) {
+                            continue;
                         }
 
+                        ot_dist = calc_sq_dist(dataset[i], new_centroids[neighbors[my_cluster][j]]);
+                        // shor_dist = sqrt(ot_dist);
+                        ot_dist_w = ot_dist * an2[neighbors[my_cluster][j]];
+
+                        if(ot_dist > cluster_info[neighbors[my_cluster][j]][1])
+                            cluster_info[neighbors[my_cluster][j]][1] = ot_dist;
+
+
+                        if(ot_dist_w < shortest_sse){
+                            shortest_sse = ot_dist_w;
+                            new_clus = neighbors[my_cluster][j];
+                            // cout << "Point: " << i << " Old: " << my_cluster << " New: " << new_clus << endl;
+                        } 
+
+                        //}
+
                     }
+
+            }
                     
                     // auto t4 = std::chrono::high_resolution_clock::now();
                     // auto temp1 = std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count();
@@ -164,7 +178,7 @@ float threshold, int num_iterations, int numCols, int time_limit){
                 // auto temp1 = std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count();
                 // inner_loop_time += temp1;
 
-            for (int i = 0; i < num_clusters; i++){
+            for (i = 0; i < num_clusters; i++){
                 cluster_info[i][1] = sqrt(cluster_info[i][1]);
                 if (cluster_info[i][0] > 1)
                     an1[i] = cluster_info[i][0]/(cluster_info[i][0]-1);
@@ -206,7 +220,6 @@ float threshold, int num_iterations, int numCols, int time_limit){
     result.centroids = new_centroids;
     // result.runtime = float(Totaltime.count());
     result.timeout = false;
-
 
     // cout << "neighbor time: " << neighbor_time << endl;
     // cout << "Inner Loop time: " << inner_loop_time << endl;

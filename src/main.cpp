@@ -34,7 +34,7 @@ int main(){
 
     
     // Declare variables
-    int num_iterations = 100;
+    int num_iterations = 1000;
     float threshold = 0;
 
     // vector<string> file_list = {"fourclass.csv", "codrna.csv", "Breastcancer.csv",
@@ -49,7 +49,7 @@ int main(){
     vector<string> file_list = {"magic.csv"};
     vector<string> out_list = {"magic"};
 
-    int num_clusters = 10;
+    int num_clusters = 40;
 
     somefilePath = basePath + file_list[0];
 
