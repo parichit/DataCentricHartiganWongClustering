@@ -88,9 +88,7 @@ vector<vector<float> > &cluster_info, float &neighbor_dist,
 
 inline void find_neighbors(vector<vector <float> > &centroids, 
 vector<vector <float> > &center_dist_mat, vector<vector <float> > &cluster_info, 
-vector<vector<int> > &neighbors, vector<vector<vector <float> > > &cutoff_points, 
-vector<vector<vector <float> > > &affine_vectors, vector<float> &an1, vector<float> &an2,
-vector<float> &cluster_safe){
+vector<vector<int> > &neighbors, long long int &dist_calcs){
 
     float dist = 0;
     float radius = 0, scale_fac = 0;
@@ -115,7 +113,7 @@ vector<float> &cluster_safe){
             
             // Do only k calculations, save so many :)
             if (curr_center < ot_center){
-                dist = calc_euclidean(centroids[curr_center], centroids[ot_center]);
+                dist = calc_euclidean(centroids[curr_center], centroids[ot_center], dist_calcs);
                 center_dist_mat[curr_center][ot_center] = dist;
                 center_dist_mat[ot_center][curr_center] = center_dist_mat[curr_center][ot_center];
             }

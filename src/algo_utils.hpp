@@ -96,7 +96,8 @@ vector<vector <T1> > &dataset, T2 num_cluster){
 }
 
 
-inline float calc_sq_dist(const vector<float> &point, const vector<float> &center){
+inline float calc_sq_dist(const vector<float> &point, const vector<float> &center,
+long long int &dist_calcs){
     
     float dist = 0.0;
     float temp = 0.0;
@@ -106,11 +107,13 @@ inline float calc_sq_dist(const vector<float> &point, const vector<float> &cente
         dist = dist + (temp*temp);
     }
 
+    dist_calcs += 1; 
     return dist;
 }
 
 
-inline float calc_euclidean(const vector<float> &point, const vector<float> &center){
+inline float calc_euclidean(const vector<float> &point, const vector<float> &center, 
+long long int &dist_calcs){
     
     float dist = 0.0;
     float temp = 0.0;
@@ -121,6 +124,7 @@ inline float calc_euclidean(const vector<float> &point, const vector<float> &cen
     }
 
     dist = sqrt(dist);
+    dist_calcs += 1; 
     return dist;
 }
 
@@ -128,7 +132,7 @@ inline float calc_euclidean(const vector<float> &point, const vector<float> &cen
 inline void calculate_distances(const vector<vector<float> > &dataset, 
 vector<vector<float> > &centroids, vector<float> &dist_mat,
 int num_clusters, vector<int> &assigned_clusters, vector<vector<float> > &cluster_info, 
-long long int &dist_counter)
+long long int &dist_calcs)
 
     {
     
@@ -143,7 +147,7 @@ long long int &dist_counter)
 
         for (j=0; j < centroids.size(); j++){ 
             
-            temp1 = calc_euclidean(dataset[i], centroids[j]);
+            temp1 = calc_euclidean(dataset[i], centroids[j], dist_calcs);
             
             if (temp1 < shortestDist1){
                 shortestDist1 = temp1;
@@ -164,44 +168,6 @@ long long int &dist_counter)
     }
 }
 
-
-inline void calculate_distances_dchw(const vector<vector<float> > &dataset, 
-vector<vector<float> > &centroids, vector<float> &dist_mat,
-int num_clusters, vector<int> &assigned_clusters, 
-vector<vector<float> > &cluster_info, long long int &dist_counter)
-
-    {
-    
-    float temp1 = 0.0, temp2 = 0, shortestDist1 = 0.0;
-    int i = 0, j = 0, fcenter = 0, scenter = 0;
-
-    // Calculate the distance of points to nearest center
-    for (i=0; i < dataset.size(); i++){
-
-        shortestDist1 = std::numeric_limits<float>::max();
-  
-        for (j=0; j < centroids.size(); j++){ 
-            
-            temp1 = calc_sq_dist(dataset[i], centroids[j]);
-            
-            if (temp1 < shortestDist1){
-                shortestDist1 = temp1;
-                fcenter = j;
-            }
-
-        }
-        
-        dist_mat[i]= shortestDist1;
-        assigned_clusters[i] = fcenter;
-
-        // Increase the size of the cluster
-        cluster_info[fcenter][0] += 1;
-        
-        // Store the max so far
-        if (shortestDist1 > cluster_info[fcenter][1])
-            cluster_info[fcenter][1] = shortestDist1;
-    }
-}
 
 
 inline void update_centroids(vector<vector <float> > &dataset, 
@@ -265,4 +231,26 @@ bool check_status(vector<vector<float> > &centroids1, vector<vector<float> > &ce
             return true;
     }
     return false;
+}
+
+
+float get_sse(vector<vector <float> > &dataset, vector<vector <float> > &centroids, 
+vector<vector<float> > &cluster_size, vector<int> assigned_clusters, int num_cluster){
+
+float total_sse = 0;
+vector<float> sse_vec(num_cluster, 0);
+int i = 0;
+long long int temp = 0;
+
+for (i = 0; i<dataset.size(); i++){
+    sse_vec[assigned_clusters[i]] += calc_sq_dist(dataset[i], centroids[assigned_clusters[i]], temp);
+}
+
+for(i = 0; i< num_cluster;i++){
+    sse_vec[i] /= cluster_size[i][0];
+    total_sse += sse_vec[i];
+}
+
+return total_sse;
+
 }

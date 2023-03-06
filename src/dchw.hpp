@@ -10,7 +10,8 @@ using namespace std;
 
 
 inline output_data dchw_kmeans(vector<vector <float> > &dataset, int num_clusters, 
-float threshold, int num_iterations, int numCols, int time_limit){
+float threshold, int num_iterations, int numCols, int time_limit, 
+string centroid_select_type, int seed=0){
 
     vector<vector<float> > centroids(num_clusters, vector<float>(numCols, 0));
     vector<vector<float> > new_centroids(num_clusters, vector<float>(numCols, 0));
@@ -31,7 +32,7 @@ float threshold, int num_iterations, int numCols, int time_limit){
 
     int loop_counter = 0, i = 0, j = 0, my_cluster = 0, new_clus = 0;
     float ot_dist = 0, ot_dist_w = 0, my_dist = 0, my_dist_w = 0, shor_dist = 0, temp = 0;
-    long long int dist_counter = 0;
+    long long int dist_calcs = 0;
 
     output_data result;
     bool centroid_status = false;
@@ -40,14 +41,20 @@ float threshold, int num_iterations, int numCols, int time_limit){
     float lim = std::numeric_limits<float>::max();
 
     // Start time counter 
-    // auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
     
     // Initialize centroids
-    init_centroids_sequentially(centroids, dataset, num_clusters);
+    if (centroid_select_type == "seq"){
+        init_centroids_sequentially(centroids, dataset, num_clusters);
+    }
+    else if (centroid_select_type == "random"){
+        init_centroids_randomly(centroids, dataset, num_clusters, seed);
+    }
+    
 
     calculate_distances(dataset, centroids, dist_mat, 
     num_clusters, assigned_clusters, cluster_info, 
-    dist_counter);
+    dist_calcs);
 
     // Check for empty clusters and return
     for (i=0; i<num_clusters; i++){
@@ -58,6 +65,7 @@ float threshold, int num_iterations, int numCols, int time_limit){
             result.num_dist = 0;
             result.runtime = 0;
             result.timeout = false;
+            result.sse = std::numeric_limits<float>::max();
             return result;
         }
     }
@@ -97,8 +105,7 @@ float threshold, int num_iterations, int numCols, int time_limit){
             
             // Find neighbors
             // auto t1 = std::chrono::high_resolution_clock::now();
-            find_neighbors(new_centroids, center_dist_mat, cluster_info, neighbors, 
-            cutoff_points, affine_vectors, an1, an2, cluster_safe);
+            find_neighbors(new_centroids, center_dist_mat, cluster_info, neighbors, dist_calcs);
             // auto t2 = std::chrono::high_resolution_clock::now();
             // auto temp = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
             // neighbor_time += temp;
@@ -123,7 +130,7 @@ float threshold, int num_iterations, int numCols, int time_limit){
                 if ((cluster_info[my_cluster][0] > 1) && (cluster_info[my_cluster][2] > 0)){
                         // continue;
 
-                    my_dist = calc_sq_dist(dataset[i], new_centroids[my_cluster]);
+                    my_dist = calc_sq_dist(dataset[i], new_centroids[my_cluster], dist_calcs);
                     my_dist_w = my_dist * an1[my_cluster]; 
                     shortest_sse = lim;
                     temp = sqrt(my_dist);
@@ -142,7 +149,7 @@ float threshold, int num_iterations, int numCols, int time_limit){
                             continue;
                         }
 
-                        ot_dist = calc_sq_dist(dataset[i], new_centroids[neighbors[my_cluster][j]]);
+                        ot_dist = calc_sq_dist(dataset[i], new_centroids[neighbors[my_cluster][j]], dist_calcs);
                         // shor_dist = sqrt(ot_dist);
                         ot_dist_w = ot_dist * an2[neighbors[my_cluster][j]];
 
@@ -211,14 +218,15 @@ float threshold, int num_iterations, int numCols, int time_limit){
 
         }
 
-    // auto end = std::chrono::high_resolution_clock::now();
-    // auto Totaltime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto Totaltime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     result.loop_counter = loop_counter;
-    result.num_dist = dataset.size() * loop_counter * num_clusters;
+    result.num_dist = dist_calcs;
     result.assigned_labels = assigned_clusters;
     result.centroids = new_centroids;
-    // result.runtime = float(Totaltime.count());
+    result.runtime = float(Totaltime.count());
+    result.sse = get_sse(dataset, centroids, cluster_info, assigned_clusters, num_clusters);
     result.timeout = false;
 
     // cout << "neighbor time: " << neighbor_time << endl;

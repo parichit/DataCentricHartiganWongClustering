@@ -129,19 +129,20 @@ using namespace std;
 inline void reassign_point(vector<float> &point, int index, vector<float> &dist_matrix, 
 vector<vector<float> > &new_centroids, vector<int> &assigned_clusters, int curr_cluster, 
 vector<vector<float> > &cluster_info, 
-vector<float> &an1, vector<float> &an2, long long int &dist_counter){
+vector<float> &an1, vector<float> &an2, 
+long long int &dist_calcs){
 
 float temp = 0, my_sse = 0, ot_sse = 0, 
 shortest_sse = std::numeric_limits<float>::max(), shortest_dist = 0;
 int new_cluster = 0;
 
-    my_sse = calc_sq_dist(point, new_centroids[curr_cluster]);
+    my_sse = calc_sq_dist(point, new_centroids[curr_cluster], dist_calcs);
     my_sse *= an1[curr_cluster];
     // shortest_sse = my_sse;
 
     for (int ot_cluster = 0; ot_cluster < new_centroids.size(); ot_cluster++){
         if(curr_cluster != ot_cluster){
-            ot_sse = (calc_sq_dist(point, new_centroids[ot_cluster])) * an2[ot_cluster];
+            ot_sse = (calc_sq_dist(point, new_centroids[ot_cluster], dist_calcs)) * an2[ot_cluster];
             if (ot_sse < shortest_sse){
                 shortest_sse = ot_sse;
                 // shortest_dist = ot_sse/an2[ot_cluster];
