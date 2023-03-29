@@ -26,7 +26,7 @@ using namespace std;
 
 best_results hw_rr(vector<vector <float> > &dataset, int num_clusters,
 float threshold, int num_iterations, int numCols, int time_limit,
-int num_restarts, int bint){
+int num_restarts, int bint, string init_type, vector<int> indices){
 
     float best_score = std::numeric_limits<float>::max();
 
@@ -46,8 +46,14 @@ int num_restarts, int bint){
     // Run the program iteratively
     for (int i=0; i < num_restarts; i++){
 
+        // vector<int> temp = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+
+        // for(int j=0; j < temp.size(); j++){
+        //     temp[j] = temp[j] + i;
+        // }
+
         results = hw_kmeans(dataset, num_clusters, threshold, num_iterations, 
-        numCols, time_limit, "random", bint+i);
+        numCols, time_limit, init_type, indices, bint+i);
 
         // cout << "run :" << i << " SSE: " << results.sse << endl;
         if (results.sse < best_score){

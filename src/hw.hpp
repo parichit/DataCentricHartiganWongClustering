@@ -10,7 +10,7 @@ using namespace std;
 
 inline output_data hw_kmeans(vector<vector <float> > &dataset, int num_clusters, 
 float threshold, int num_iterations, int numCols, int time_limit, 
-string centroid_select_type, int seed=0){
+string init_type, vector<int> indices, int seed=0){
 
     vector<vector<float> > centroids(num_clusters, vector<float>(numCols, 0));
     vector<vector<float> > new_centroids(num_clusters, vector<float>(numCols, 0));
@@ -22,7 +22,7 @@ string centroid_select_type, int seed=0){
 
     vector<int> assigned_clusters(dataset.size(), 0);
 
-    long long int dist_calcs = 0;
+    unsigned long long int dist_calcs = 0;
     int loop_counter = 0, curr_cluster = 0, ot_cluster = 0;
     bool centroid_status = false;
 
@@ -30,17 +30,20 @@ string centroid_select_type, int seed=0){
 
     // Start time counter 
     auto start = std::chrono::high_resolution_clock::now();
+
+    // Initialize centroids
+    if ((init_type == "indices") & (indices.size() == 0)){
+        cout << "You must provide the row indices to be used as indices" << endl;
+        cout << "Exiting" << endl;
+        exit(0);
+    }
     
     // Initialize centroids
-    if (centroid_select_type == "seq"){
-        init_centroids_sequentially(centroids, dataset, num_clusters);
-    }
-    else if (centroid_select_type == "random"){
-        init_centroids_randomly(centroids, dataset, num_clusters, seed);
-    }
+    init_centroids(centroids, dataset, num_clusters, init_type, indices, seed);
 
     calculate_distances(dataset, centroids, dist_matrix, 
     num_clusters, assigned_clusters, cluster_info, dist_calcs);
+
 
     // Check for empty clusters and return
     for (int i=0; i<num_clusters; i++){
@@ -52,6 +55,7 @@ string centroid_select_type, int seed=0){
             result.runtime = 0;
             result.timeout = false;
             result.sse = std::numeric_limits<float>::max();
+            result.centroids = centroids;
             return result;
         }
     }
@@ -141,7 +145,7 @@ string centroid_select_type, int seed=0){
     result.centroids = new_centroids;
     result.runtime = float(Totaltime.count());
     result.timeout = false;
-    result.sse = get_sse(dataset, centroids, cluster_info, assigned_clusters, num_clusters);
+    result.sse = get_sse(dataset, new_centroids, cluster_info, assigned_clusters, num_clusters);
 
     return result;
 

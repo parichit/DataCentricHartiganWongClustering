@@ -130,7 +130,7 @@ inline void reassign_point(vector<float> &point, int index, vector<float> &dist_
 vector<vector<float> > &new_centroids, vector<int> &assigned_clusters, int curr_cluster, 
 vector<vector<float> > &cluster_info, 
 vector<float> &an1, vector<float> &an2, 
-long long int &dist_calcs){
+unsigned long long int &dist_calcs){
 
 float temp = 0, my_sse = 0, ot_sse = 0, 
 shortest_sse = std::numeric_limits<float>::max(), shortest_dist = 0;

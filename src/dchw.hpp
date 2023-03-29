@@ -11,7 +11,7 @@ using namespace std;
 
 inline output_data dchw_kmeans(vector<vector <float> > &dataset, int num_clusters, 
 float threshold, int num_iterations, int numCols, int time_limit, 
-string centroid_select_type, int seed=0){
+string init_type, vector<int> indices, int seed=0){
 
     vector<vector<float> > centroids(num_clusters, vector<float>(numCols, 0));
     vector<vector<float> > new_centroids(num_clusters, vector<float>(numCols, 0));
@@ -32,7 +32,7 @@ string centroid_select_type, int seed=0){
 
     int loop_counter = 0, i = 0, j = 0, my_cluster = 0, new_clus = 0;
     float ot_dist = 0, ot_dist_w = 0, my_dist = 0, my_dist_w = 0, shor_dist = 0, temp = 0;
-    long long int dist_calcs = 0;
+    unsigned long long int dist_calcs = 0;
 
     output_data result;
     bool centroid_status = false;
@@ -44,13 +44,13 @@ string centroid_select_type, int seed=0){
     auto start = std::chrono::high_resolution_clock::now();
     
     // Initialize centroids
-    if (centroid_select_type == "seq"){
-        init_centroids_sequentially(centroids, dataset, num_clusters);
+    if ((init_type == "indices") & (indices.size() == 0)){
+        cout << "You must provide the row indices to be used as indices" << endl;
+        cout << "Exiting" << endl;
+        exit(0);
     }
-    else if (centroid_select_type == "random"){
-        init_centroids_randomly(centroids, dataset, num_clusters, seed);
-    }
-    
+
+    init_centroids(centroids, dataset, num_clusters, init_type, indices, seed);
 
     calculate_distances(dataset, centroids, dist_mat, 
     num_clusters, assigned_clusters, cluster_info, 

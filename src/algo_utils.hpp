@@ -9,8 +9,6 @@
 
 using namespace std;
 
-
-
 template <typename T1>
 void reinit(vector<vector<T1> > &container){
 
@@ -41,26 +39,6 @@ void get_ranodm_indices(int *arr, int size, int seed)
 
 
 template <typename T1, typename T2>
-void init_centroids_randomly(vector<vector <T1> > &centroids, 
-vector<vector <T1> > &dataset, T2 num_cluster, T2 seed){
-
-    int i = 0, j = 0, size = dataset.size();
-    int test_array[size];
-
-    for (i = 0; i<size ; i++){
-        test_array[i] = i;
-    }
-    
-    get_ranodm_indices(test_array, size, seed);
-
-    for(i=0; i<num_cluster; i++){  
-        for(j=0; j <dataset[i].size(); j++){
-            centroids[i][j] = dataset[test_array[i]][j];
-        }   
-    }
-}
-
-template <typename T1, typename T2>
 void extract_data(vector<vector <T1> > &dataset, vector<vector <T1> > &extracted_data, 
 T2 num_points, T2 num_cluster, T2 seed){
 
@@ -83,21 +61,57 @@ T2 num_points, T2 num_cluster, T2 seed){
 }
 
 
-
 template <typename T1, typename T2>
-void init_centroids_sequentially(vector<vector <T1> > &centroids, 
-vector<vector <T1> > &dataset, T2 num_cluster){
+void init_centroids(vector<vector <T1> > &centroids, 
+vector<vector <T1> > &dataset, T2 num_cluster, 
+string init_type, vector<T2> indices, T2 seed){
 
-    for(int i=0; i<num_cluster; i++){  
-        for(int j=0; j<dataset[i].size(); j++){
-                centroids[i][j] = dataset[i][j];
+    int i = 0, j = 0, size = dataset.size();
+
+    // Randomly selected centroids with seeds
+    if (init_type == "random"){
+        
+        int test_array[size];
+
+        for (i = 0; i<size ; i++){
+            test_array[i] = i;
+        }
+    
+    get_ranodm_indices(test_array, size, seed);
+
+    for(i=0; i<num_cluster; i++){  
+        for(j=0; j <dataset[i].size(); j++){
+            centroids[i][j] = dataset[test_array[i]][j];
         }   
+    }
+
+    }
+    
+    // Sequential centroid selection (takes the first num_cluster points as centroids)
+    else if (init_type == "sequential"){
+
+        for(i=0; i<num_cluster; i++){  
+            for(j=0; j<dataset[i].size(); j++){
+                centroids[i][j] = dataset[i][j];
+            }   
+        }
+    }
+
+    // Manual centroid selection based on row indices
+    // the indices will be used as indices
+    else if (init_type == "indices"){
+
+        for(i=0; i<num_cluster; i++){  
+            for(j=0; j<dataset[i].size(); j++){
+                centroids[i][j] = dataset[indices[i]][j];
+            }   
+        }
     }
 }
 
 
 inline float calc_sq_dist(const vector<float> &point, const vector<float> &center,
-long long int &dist_calcs){
+unsigned long long int &dist_calcs){
     
     float dist = 0.0;
     float temp = 0.0;
@@ -113,7 +127,7 @@ long long int &dist_calcs){
 
 
 inline float calc_euclidean(const vector<float> &point, const vector<float> &center, 
-long long int &dist_calcs){
+unsigned long long int &dist_calcs){
     
     float dist = 0.0;
     float temp = 0.0;
@@ -132,7 +146,7 @@ long long int &dist_calcs){
 inline void calculate_distances(const vector<vector<float> > &dataset, 
 vector<vector<float> > &centroids, vector<float> &dist_mat,
 int num_clusters, vector<int> &assigned_clusters, vector<vector<float> > &cluster_info, 
-long long int &dist_calcs)
+unsigned long long int &dist_calcs)
 
     {
     
@@ -240,7 +254,7 @@ vector<vector<float> > &cluster_size, vector<int> assigned_clusters, int num_clu
 float total_sse = 0;
 vector<float> sse_vec(num_cluster, 0);
 int i = 0;
-long long int temp = 0;
+unsigned long long int temp = 0;
 
 for (i = 0; i<dataset.size(); i++){
     sse_vec[assigned_clusters[i]] += calc_sq_dist(dataset[i], centroids[assigned_clusters[i]], temp);

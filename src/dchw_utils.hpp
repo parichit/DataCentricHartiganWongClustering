@@ -88,7 +88,7 @@ vector<vector<float> > &cluster_info, float &neighbor_dist,
 
 inline void find_neighbors(vector<vector <float> > &centroids, 
 vector<vector <float> > &center_dist_mat, vector<vector <float> > &cluster_info, 
-vector<vector<int> > &neighbors, long long int &dist_calcs){
+vector<vector<int> > &neighbors, unsigned long long int &dist_calcs){
 
     float dist = 0;
     float radius = 0, scale_fac = 0;
