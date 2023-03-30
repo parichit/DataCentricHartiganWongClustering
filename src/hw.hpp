@@ -113,17 +113,18 @@ string init_type, vector<int> indices, int seed=0){
         }
 
         // Check for empty clusters and return
-        // for (int i=0; i<num_clusters; i++){
+        for (int i=0; i<num_clusters; i++){
     
-        //     if(cluster_info[i][0] == 0){
-        //         cout << "Empty cluster found during iter, safe exiting" << endl;
-        //         result.loop_counter = 0;
-        //         result.num_dist = 0;
-        //         result.runtime = 0;
-        //         result.timeout = false;
-        //         return result;
-        //     }
-        // }
+            if(cluster_info[i][0] == 0){
+                cout << "Empty cluster found during run, safe exiting" << endl;
+                result.loop_counter = loop_counter;
+                result.num_dist = dist_calcs;
+                result.runtime = 0;
+                result.timeout = false;
+                result.sse = std::numeric_limits<float>::max();
+                return result;
+            }
+        }
 
         // Copy centroids
         centroids = new_centroids;

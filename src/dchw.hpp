@@ -203,6 +203,20 @@ string init_type, vector<int> indices, int seed=0){
                 break;
         }
 
+        // Check for empty clusters and return
+        for (int i=0; i<num_clusters; i++){
+    
+            if(cluster_info[i][0] == 0){
+                cout << "Empty cluster found during run, safe exiting" << endl;
+                result.loop_counter = loop_counter;
+                result.num_dist = dist_calcs;
+                result.runtime = 0;
+                result.timeout = false;
+                result.sse = std::numeric_limits<float>::max();
+                return result;
+            }
+        }
+
         // Copy centroids
         centroids = new_centroids;
         
@@ -226,7 +240,7 @@ string init_type, vector<int> indices, int seed=0){
     result.assigned_labels = assigned_clusters;
     result.centroids = new_centroids;
     result.runtime = float(Totaltime.count());
-    result.sse = get_sse(dataset, centroids, cluster_info, assigned_clusters, num_clusters);
+    result.sse = get_sse(dataset, new_centroids, cluster_info, assigned_clusters, num_clusters);
     result.timeout = false;
 
     // cout << "neighbor time: " << neighbor_time << endl;

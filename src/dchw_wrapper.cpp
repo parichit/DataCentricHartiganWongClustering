@@ -48,10 +48,10 @@ int num_restarts, int bint, string init_type, vector<int> indices){
     // Run the program iteratively
     for (int i=0; i < num_restarts; i++){
 
-        // vector<int> temp = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+        // vector<int> indices = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
 
-        // for(int j=0; j < temp.size(); j++){
-        //     temp[j] = temp[j] + i;
+        // for(int j=0; j < indices.size(); j++){
+        //     indices[j] = indices[j] + i;
         // }
 
         results = dchw_kmeans(dataset, num_clusters, threshold, num_iterations, 
@@ -62,6 +62,7 @@ int num_restarts, int bint, string init_type, vector<int> indices){
             best_score = results.sse;
             best.num_dist = results.num_dist;
             best.centroids = results.centroids;
+            best.sse = best_score;
             //cout << best.centroids << endl;
         }
     }
@@ -142,9 +143,11 @@ auto t1 = std::chrono::high_resolution_clock::now();
 // cout << "seed:" << bint << endl;
 
 
+vector<int> my_indices = {2, 5, 7, 8, 10};
+
 // Call the function
 best = dchw_rr(dataset, num_clusters, threshold, num_iterations, numCols,
-time_limit, num_restarts, bint);
+time_limit, num_restarts, bint, "indices", my_indices);
 
 
 // Calculate elapsed time in seconds
