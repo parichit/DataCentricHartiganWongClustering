@@ -212,6 +212,7 @@ string init_type, vector<int> indices, int seed=0){
                 result.num_dist = dist_calcs;
                 result.runtime = 0;
                 result.timeout = false;
+                result.centroids = new_centroids;
                 result.sse = std::numeric_limits<float>::max();
                 return result;
             }

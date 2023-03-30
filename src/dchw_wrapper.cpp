@@ -48,7 +48,7 @@ int num_restarts, int bint, string init_type, vector<int> indices){
     // Run the program iteratively
     for (int i=0; i < num_restarts; i++){
 
-        // vector<int> indices = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+        vector<int> indices = {5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
 
         // for(int j=0; j < indices.size(); j++){
         //     indices[j] = indices[j] + i;

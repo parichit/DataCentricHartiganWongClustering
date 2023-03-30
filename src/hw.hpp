@@ -120,6 +120,7 @@ string init_type, vector<int> indices, int seed=0){
                 result.loop_counter = loop_counter;
                 result.num_dist = dist_calcs;
                 result.runtime = 0;
+                result.centroids = new_centroids;
                 result.timeout = false;
                 result.sse = std::numeric_limits<float>::max();
                 return result;
